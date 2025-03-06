@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/03 12:23:50 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/06 15:20:04 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,18 @@ void IrcServer::startServer()
 		std::cerr << "Error: Socket creation failed" << std::endl;
 		//exit(1);
 	}
+	// Bind the socket to an IP / port
+	// sockaddr_in is a structure containing an internet address
+	// sin_family: AF_INET - IPv4
+	// sin_port: Port number (htons to convert to big endian)
+	// sin_addr: IP address (INADDR_ANY to bind to all local interfaces)
+	sockaddr_in server;
+	server.sin_family = AF_INET;
+	server.sin_port = htons(_port);
+	server.sin_addr.s_addr = INADDR_ANY;
+	bind(_socket, (sockaddr *)&server, sizeof(server));
+	listen(_socket, 5);
+	std::cout << "Server started on port " << _port << std::endl;
 }
 
 void IrcServer::run()
