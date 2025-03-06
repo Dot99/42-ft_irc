@@ -73,5 +73,5 @@ void IrcServer::startServer()
 
 void IrcServer::run()
 {
-	
+
 }
