@@ -17,7 +17,7 @@
 int main(int argc, char **argv)
 {
 	std::string args[argc -1];
-	if(checkArgs(argc, argv, args));
+	if (checkArgs(argc, argv, args))
 		return(1);
 	try
 	{

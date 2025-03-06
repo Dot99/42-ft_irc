@@ -10,8 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <cstring>
-#include <iostream>
+#include "utils.hpp"
 
 /**
  * @brief Check if a string is a number
@@ -41,6 +40,12 @@ bool isNumber(std::string str)
 */
 bool checkArgs(int argc, char **argv, std::string args[])
 {
+	std::cout << "argc: " << argc << std::endl;
+	for(int i = 0; i < argc; i++)
+	{
+		args[i] = argv[i];
+		std::cout << "args[" << i << "]: " << args[i] << std::endl;
+	}
 	if(argc != 3)
 	{
 		std::cout << "Error: Invalid number of arguments" << std::endl;
@@ -53,7 +58,13 @@ bool checkArgs(int argc, char **argv, std::string args[])
 		std::cout << "Usage: ./ircserv [port] [password]" << std::endl;
 		return (true);
 	}
-	int port = std::stoi(argv[1]);
+	std::istringstream iss(args[1]);
+	int port;
+	if (!(iss >> port))
+	{
+		std::cerr << "Erro: Porta inválida\n";
+		//std::exit(EXIT_FAILURE);
+	}
 	if(port < 0 || port > 65535)
 	{
 		std::cout << "Error: Invalid port(Between 0 and 65535)" << std::endl;

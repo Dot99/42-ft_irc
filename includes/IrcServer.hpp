@@ -18,6 +18,9 @@
 #include <iostream>
 #include <unistd.h>
 #include <string>
+#include <poll.h>
+#include <map>
+#include <sstream>
 
 class IrcServer
 {
@@ -25,12 +28,18 @@ class IrcServer
 		int _port;
 		std::string _pwd;
 		int _socket;
+		std::map<int, std::string> _clients;
 		struct sockaddr_in _addr;
+		struct pollfd _poll_fds[1];
+		void acceptClient(int client_fd);
+		void handleClientMessage(int client_fd);
+		void removeClient(int client_fd);
 	public:
 		IrcServer();
 		IrcServer(const std::string args[]);
 		IrcServer &operator=(const IrcServer &rhs);
 		~IrcServer();
 		void startServer();
+		void acceptClient();
 		void run();
 };
