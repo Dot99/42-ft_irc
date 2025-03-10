@@ -134,9 +134,11 @@ void IrcServer::startServer()
 
 void IrcServer::run()
 {
+	_poll_fds[0].fd = _socket;
+	_poll_fds[0].events = POLLIN;
 	while (1)
 	{
-		int event_count = poll(_poll_fds, 3, 0);
+		int event_count = poll(_poll_fds, 3, -1);
         if (event_count == -1)
         {
             std::cerr << "Error: poll() failed" << std::endl;

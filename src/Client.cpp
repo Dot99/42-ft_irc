@@ -48,7 +48,6 @@ void Client::handleClientMessage(int client_fd)
 {
     char buffer[1024];
     int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-	std::cout << "bytes_received: " << bytes_received << std::endl;
     if (bytes_received < 0) // Client disconnected
     {
         std::cout << "Client " << client_fd << " disconnected." << std::endl;
@@ -58,7 +57,7 @@ void Client::handleClientMessage(int client_fd)
         return;
     }
     buffer[bytes_received] = '\0';
-    std::cout << "Received from client " << client_fd << ": " << buffer << std::endl;
+    std::cout << buffer << std::endl;
     // TODO: Parse and process IRC commands here
 	/*
 		Check if there is a command sent by client
@@ -110,13 +109,18 @@ void Client::acceptClient(int client_fd)
 	}
 	buffer[bytes_received] = '\0';
 	//Check password
-	if(std::string(buffer) != _server->getPwd())
+	std::string input(buffer);
+	std::string cleaned_input = "";
+	for (std::size_t i = 0; i < input.length(); ++i)
+		if (input[i] != '\r' && input[i] != '\n')
+			cleaned_input += input[i];
+	if (cleaned_input != _server->getPwd())
 	{
 		send(client_fd, "Invalid password", 16, 0);
 		close(client_fd);
 		return ;
 	}
 	//Add client to poll
-	_server->getPollFds()[1].fd = client_fd;
-	_server->getPollFds()[1].events = POLLIN;
+	_server->getPollFds()[0].fd = client_fd;
+	_server->getPollFds()[0].events = POLLIN;
 }

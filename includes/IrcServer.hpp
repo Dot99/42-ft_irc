@@ -33,7 +33,7 @@ class IrcServer
 		std::string _pwd;
 		int _socket;
 		struct sockaddr_in _server_addr;
-		struct pollfd _poll_fds[1];
+		struct pollfd _poll_fds[3];
 	public:
 		IrcServer(Client* client);
 		IrcServer(const std::string args[], Client* client);
