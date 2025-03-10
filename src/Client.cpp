@@ -13,7 +13,7 @@
 #include "Client.hpp"
 #include "IrcServer.hpp"
 
-Client::Client()
+Client::Client(IrcServer &server) : _server(server)
 {
 }
 
@@ -30,9 +30,9 @@ void Client::removeClient(int client_fd)
 {
 	for (size_t i = 0; i < 1; i++)
 	{
-		if (_poll_fds[i].fd == client_fd)
+		if (_server.getPollFds()[i].fd == client_fd)
 		{
-			_poll_fds[i] = _poll_fds[1];
+			_server.getPollFds()[i] = _server.getPollFds()[1];
 			break;
 		}
 	}
@@ -54,7 +54,7 @@ void Client::handleClientMessage(int client_fd)
         std::cout << "Client " << client_fd << " disconnected." << std::endl;
         close(client_fd);
         removeClient(client_fd);
-		close(_socket);
+		close(_server.getSock());
         return;
     }
     buffer[bytes_received] = '\0';
@@ -88,11 +88,11 @@ void Client::handleClientMessage(int client_fd)
 void Client::acceptClient(int client_fd)
 {
 	socklen_t client_addr_len = sizeof(_client_adrr);
-	int client_fd = accept(_socket, (struct sockaddr *)&_client_adrr, &client_addr_len);
+	client_fd = accept(_server.getSock(), (struct sockaddr *)&_client_adrr, &client_addr_len);
 	if(client_fd < 0)
 	{
 		std::cerr << "Error: Client connection failed" << std::endl;
-		close(_socket);
+		close(_server.getSock());
 		//exit(1);
 	}
 	std::cout << "Client connected" << std::endl;
@@ -105,19 +105,18 @@ void Client::acceptClient(int client_fd)
 	{
 		std::cout << "Client " << client_fd << " disconnected." << std::endl;
 		close(client_fd);
-		close(_socket);
+		close(_server.getSock());
 		return;
 	}
 	buffer[bytes_received] = '\0';
 	//Check password
-	if(std::string(buffer) != _pwd)
+	if(std::string(buffer) != _server.getPwd())
 	{
 		send(client_fd, "Invalid password", 16, 0);
 		close(client_fd);
 		return ;
 	}
 	//Add client to poll
-	_poll_fds[1].fd = client_fd;
-	_poll_fds[1].events = POLLIN;
-	
+	_server.getPollFds()[1].fd = client_fd;
+	_server.getPollFds()[1].events = POLLIN;
 }

@@ -16,7 +16,7 @@
 /**
  * @brief Construct a new Default Irc Server:: Irc Server object
 */
-IrcServer::IrcServer()
+IrcServer::IrcServer(Client &client) : _client(client)
 {
 }
 
@@ -24,7 +24,7 @@ IrcServer::IrcServer()
  * @brief Construct a new Parameterized Irc Server:: Irc Server object
  * @param args Arguments
 */
-IrcServer::IrcServer(const std::string args[])
+IrcServer::IrcServer(const std::string args[], Client &client) : _client(client)
 {
 	std::istringstream iss(args[1]);
 	if (!(iss >> _port))
@@ -55,6 +55,37 @@ IrcServer &IrcServer::operator=(const IrcServer &rhs)
 	_pwd = rhs._pwd;
 	return (*this);
 }
+
+/**
+ * @brief Get the Socket object
+ * 
+ * @return int Socket
+*/
+int IrcServer::getSock() const
+{
+	return (_socket);
+}
+
+/**
+ * @brief Get the Password object
+ * 
+ * @return std::string Password
+*/
+std::string IrcServer::getPwd() const
+{
+	return (_pwd);
+}
+
+/**
+ * @brief Get the Poll Fds object
+ * 
+ * @return struct pollfd* Poll Fds
+*/
+struct pollfd *IrcServer::getPollFds()
+{
+	return (_poll_fds);
+}
+
 
 /**
  * @brief Starts the IRC server
@@ -113,9 +144,9 @@ void IrcServer::run()
             if (_poll_fds[i].revents & POLLIN) 
             {
                 if (_poll_fds[i].fd == _socket)
-					acceptClient();
+					_client.acceptClient(_poll_fds[i].fd);
                 else
-                    handleClientMessage(_poll_fds[i].fd);
+                	_client.handleClientMessage(_poll_fds[i].fd);
             }
 		}
 	}

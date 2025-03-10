@@ -19,16 +19,22 @@
 #include <unistd.h>
 #include <string>
 #include <poll.h>
+#include "IrcServer.hpp"
+
+class IrcServer;
 
 class Client
 {
 	private:
-		void acceptClient(int client_fd);
-		void handleClientMessage(int client_fd);
-		void removeClient(int client_fd);
+		IrcServer &_server;
+		std::map<int, std::string> _clients;
+		struct sockaddr_in _client_adrr;
 	public:
-		Client();
+		Client(IrcServer &server);
 		Client(const Client &rhs);
 		Client &operator=(const Client &rhs);
 		~Client();
-}
+		void acceptClient(int client_fd);
+		void handleClientMessage(int client_fd);
+		void removeClient(int client_fd);
+};

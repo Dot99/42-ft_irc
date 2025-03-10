@@ -21,23 +21,27 @@
 #include <poll.h>
 #include <map>
 #include <sstream>
+#include "Client.hpp"
+
+class Client;
 
 class IrcServer
 {
 	private:
+		Client &_client;
 		int _port;
 		std::string _pwd;
 		int _socket;
-		std::map<int, std::string> _clients;
 		struct sockaddr_in _server_addr;
-		struct sockaddr_in _client_adrr;
 		struct pollfd _poll_fds[1];
 	public:
-		IrcServer();
-		IrcServer(const std::string args[]);
+		IrcServer(Client &client);
+		IrcServer(const std::string args[], Client &client);
 		IrcServer &operator=(const IrcServer &rhs);
-		~IrcServer();
+		int getSock() const;
+		std::string getPwd() const;
+		struct pollfd *getPollFds(); 
+		virtual ~IrcServer();
 		void startServer();
-		void acceptClient();
 		void run();
 };

@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "IrcServer.hpp"
+#include "Client.hpp"
 #include "Utils.hpp"
 #include <string>
 
@@ -18,10 +19,11 @@ int main(int argc, char **argv)
 {
 	std::string args[argc -1];
 	if (checkArgs(argc, argv, args))
-		return(1);
+	return(1);
 	try
 	{
-		IrcServer irc(args);
+		Client client(0);
+		IrcServer irc(args, client);
 		irc.run();
 	}
 	catch(const std::exception& e)
