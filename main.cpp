@@ -17,9 +17,9 @@
 
 int main(int argc, char **argv)
 {
-	std::string args[argc -1];
+	std::string args[argc];
 	if (checkArgs(argc, argv, args))
-	return(1);
+		return(1);
 	try
 	{
 		IrcServer* server = new IrcServer(args, NULL);

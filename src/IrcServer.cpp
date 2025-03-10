@@ -108,6 +108,13 @@ void IrcServer::startServer()
 		std::cerr << "Error: Socket creation failed" << std::endl;
 		//exit(1);
 	}
+	int opt = 1;
+	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
+	{
+		std::cerr << "Error: Setsockopt failed" << std::endl;
+		close(_socket);
+		//exit(1);
+	}
 	// Bind the socket to an IP / port
 	// sockaddr_in is a structure containing an internet address
 	// sin_family: AF_INET - IPv4
@@ -121,12 +128,14 @@ void IrcServer::startServer()
 	{
 		std::cerr << "Error: Bind failed" << std::endl;
 		close(_socket);
+		throw std::exception();
 		//exit(1);
 	}
 	if(listen(_socket, 5) < 0)
 	{
 		std::cerr << "Error: Listen failed" << std::endl;
 		close(_socket);
+		throw std::exception();
 		//exit(1);
 	}
 	std::cout << "Server started on port: " << _port << std::endl;
