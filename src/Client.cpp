@@ -6,12 +6,16 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/10 11:13:24 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/10 12:57:13 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 #include "IrcServer.hpp"
+
+Client::Client(IrcServer* server) : _server(server), _clients()
+{
+};
 
 Client::Client(IrcServer* server) : _server(server)
 {
@@ -19,6 +23,16 @@ Client::Client(IrcServer* server) : _server(server)
 
 Client::~Client()
 {
+}
+
+
+/**
+ * @brief Get the Info object
+ * 
+*/
+std::map<int, struct client_info> Client::getInfo()
+{
+	return (_clients);
 }
 
 /**
@@ -78,6 +92,33 @@ void Client::handleClientMessage(int client_fd)
 				Create channel
 			Join channel
 	*/
+	std::istringstream iss(buffer);
+	std::string command, param;
+	iss >> command >> param;
+	if (command != "PASS")
+	{
+		send(client_fd, "ERROR :You must authenticate with PASS first\r\n", 46, 0);
+		return;
+	}
+	else
+	{
+		if (_clients[client_fd].isAuthenticated)
+		{
+			send(client_fd, "ERROR: Already authenticated\r\n", 30, 0);
+			return;
+		}
+		if (param == _server->getPwd())
+		{
+			_clients[client_fd].isAuthenticated = true;
+			send(client_fd, "Password accepted. Please send NICK and USER.\r\n", 46, 0);
+		}
+		else
+		{
+			send(client_fd, "ERROR :Incorrect password\r\n", 27, 0);
+			close(client_fd);
+			removeClient(client_fd);
+		}
+	}
 }
 
 
@@ -101,7 +142,7 @@ void Client::acceptClient(int client_fd)
 	char buffer[1024];
 	send(client_fd, "Enter password: ", 16, 0);
 	int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-	if (bytes_received < 0) // Client disconnected
+	if (bytes_received <= 0) // Client disconnected
 	{
 		std::cout << "Client " << client_fd << " disconnected." << std::endl;
 		close(client_fd);
@@ -109,14 +150,33 @@ void Client::acceptClient(int client_fd)
 		return;
 	}
 	buffer[bytes_received] = '\0';
-	//Check password
-	if(std::string(buffer) != _server->getPwd())
+	std::string message(buffer);
+	std::istringstream iss(message);
+	std::string command, param;
+	iss >> command >> param;
+
+	if(command == "PASS")
 	{
-		send(client_fd, "Invalid password", 16, 0);
-		close(client_fd);
-		return ;
-	}
-	//Add client to poll
-	_server->getPollFds()[1].fd = client_fd;
-	_server->getPollFds()[1].events = POLLIN;
+		if (_clients[client_fd].isAuthenticated)
+        {
+            send(client_fd, "ERROR :Already authenticated\r\n", 30, 0);
+            return;
+        }
+
+        if (param == _server->getPwd()) 
+        {
+            _clients[client_fd].isAuthenticated = true;
+            send(client_fd, "Password accepted. Please send NICK and USER.\r\n", 46, 0);
+        }
+        else
+        {
+            send(client_fd, "ERROR :Incorrect password\r\n", 27, 0);
+            close(client_fd);
+            removeClient(client_fd);
+        }
+    }
+    else if (!_clients[client_fd].isAuthenticated)
+    {
+        send(client_fd, "ERROR :You must authenticate with PASS first\r\n", 46, 0);
+    }
 }
