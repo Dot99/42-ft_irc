@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:25:36 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/10 10:30:15 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/10 11:06:52 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,11 +26,11 @@ class IrcServer;
 class Client
 {
 	private:
-		IrcServer &_server;
+		IrcServer* _server;
 		std::map<int, std::string> _clients;
 		struct sockaddr_in _client_adrr;
 	public:
-		Client(IrcServer &server);
+		Client(IrcServer* server);
 		Client(const Client &rhs);
 		Client &operator=(const Client &rhs);
 		~Client();

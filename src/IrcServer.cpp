@@ -6,25 +6,17 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/10 10:26:21 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/10 11:12:17 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IrcServer.hpp"
 
-
-/**
- * @brief Construct a new Default Irc Server:: Irc Server object
-*/
-IrcServer::IrcServer(Client &client) : _client(client)
-{
-}
-
 /**
  * @brief Construct a new Parameterized Irc Server:: Irc Server object
  * @param args Arguments
 */
-IrcServer::IrcServer(const std::string args[], Client &client) : _client(client)
+IrcServer::IrcServer(const std::string args[], Client* client) : _client(client)
 {
 	std::istringstream iss(args[1]);
 	if (!(iss >> _port))
@@ -54,6 +46,17 @@ IrcServer &IrcServer::operator=(const IrcServer &rhs)
 	_port = rhs._port;
 	_pwd = rhs._pwd;
 	return (*this);
+}
+
+/**
+ * @brief Set the Client object
+ * 
+ * @param client Client object
+*/
+
+void IrcServer::setClient(Client* client)
+{
+	_client = client;
 }
 
 /**
@@ -144,11 +147,10 @@ void IrcServer::run()
             if (_poll_fds[i].revents & POLLIN) 
             {
                 if (_poll_fds[i].fd == _socket)
-					_client.acceptClient(_poll_fds[i].fd);
+					_client->acceptClient(_poll_fds[i].fd);
                 else
-                	_client.handleClientMessage(_poll_fds[i].fd);
+                	_client->handleClientMessage(_poll_fds[i].fd);
             }
 		}
 	}
-	
 }

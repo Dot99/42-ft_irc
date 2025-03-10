@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 10:26:42 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/10 10:25:24 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/10 11:13:04 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,10 @@ int main(int argc, char **argv)
 	return(1);
 	try
 	{
-		Client client(0);
-		IrcServer irc(args, client);
-		irc.run();
+		IrcServer* server = new IrcServer(args, NULL);
+		Client client(server);
+		server->setClient(&client);
+		server->run();
 	}
 	catch(const std::exception& e)
 	{
