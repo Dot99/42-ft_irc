@@ -6,12 +6,16 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/10 11:13:24 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/10 13:08:11 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Client.hpp"
 #include "IrcServer.hpp"
+
+Client::Client(IrcServer* server) : _server(server), _clients()
+{
+};
 
 Client::Client(IrcServer* server) : _server(server)
 {
@@ -19,6 +23,16 @@ Client::Client(IrcServer* server) : _server(server)
 
 Client::~Client()
 {
+}
+
+
+/**
+ * @brief Get the Info object
+ * 
+*/
+std::map<int, struct client_info> Client::getInfo()
+{
+	return (_clients);
 }
 
 /**
@@ -77,6 +91,7 @@ void Client::handleClientMessage(int client_fd)
 				Create channel
 			Join channel
 	*/
+
 }
 
 
@@ -100,7 +115,7 @@ void Client::acceptClient(int client_fd)
 	char buffer[1024];
 	send(client_fd, "Enter password: ", 16, 0);
 	int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-	if (bytes_received < 0) // Client disconnected
+	if (bytes_received <= 0) // Client disconnected
 	{
 		std::cout << "Client " << client_fd << " disconnected." << std::endl;
 		close(client_fd);
