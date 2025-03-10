@@ -6,7 +6,7 @@
 #    By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/03 09:45:33 by gude-jes          #+#    #+#              #
-#    Updated: 2025/03/03 12:08:31 by gude-jes         ###   ########.fr        #
+#    Updated: 2025/03/10 10:29:13 by gude-jes         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -18,7 +18,7 @@ VPATH = src
 RM = rm -rf
 
 NAME = ircserv
-SRC = main.cpp IrcServer.cpp utils.cpp
+SRC = main.cpp IrcServer.cpp Utils.cpp Client.cpp
 
 OBJ_DIR = obj
 OBJ = $(SRC:%.cpp=$(OBJ_DIR)/%.o)

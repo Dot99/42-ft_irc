@@ -6,11 +6,11 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/07 09:12:48 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/10 10:25:19 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "utils.hpp"
+#include "Utils.hpp"
 
 /**
  * @brief Check if a string is a number

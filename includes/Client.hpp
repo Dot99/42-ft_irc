@@ -1,32 +1,34 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
+/*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/03/03 10:26:42 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/10 10:25:24 by gude-jes         ###   ########.fr       */
+/*   Created: 2025/03/10 10:25:36 by gude-jes          #+#    #+#             */
+/*   Updated: 2025/03/10 10:30:15 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "IrcServer.hpp"
-#include "Utils.hpp"
+#pragma once
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <cstring>
+#include <iostream>
+#include <unistd.h>
 #include <string>
+#include <poll.h>
 
-int main(int argc, char **argv)
+class Client
 {
-	std::string args[argc -1];
-	if (checkArgs(argc, argv, args))
-		return(1);
-	try
-	{
-		IrcServer irc(args);
-		irc.run();
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-	}
-	return (0);
+	private:
+		void acceptClient(int client_fd);
+		void handleClientMessage(int client_fd);
+		void removeClient(int client_fd);
+	public:
+		Client();
+		Client(const Client &rhs);
+		Client &operator=(const Client &rhs);
+		~Client();
 }
