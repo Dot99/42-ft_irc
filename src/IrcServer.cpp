@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/06 15:20:04 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/07 09:29:02 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,19 +81,19 @@ void IrcServer::removeClient(int client_fd)
 */
 void IrcServer::handleClientMessage(int client_fd)
 {
-    char buffer[512];
+    char buffer[1024];
     int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 	std::cout << "bytes_received: " << bytes_received << std::endl;
-    if (bytes_received <= 0) // Client disconnected
+    if (bytes_received < 0) // Client disconnected
     {
         std::cout << "Client " << client_fd << " disconnected." << std::endl;
         close(client_fd);
         removeClient(client_fd);
+		close(_socket);
         return;
     }
     buffer[bytes_received] = '\0';
-    std::string message(buffer);
-    std::cout << "Received from client " << client_fd << ": " << message << std::endl;
+    std::cout << "Received from client " << client_fd << ": " << buffer << std::endl;
     // TODO: Parse and process IRC commands here
 }
 
@@ -104,12 +104,12 @@ void IrcServer::handleClientMessage(int client_fd)
 */
 void IrcServer::acceptClient()
 {
-	sockaddr_in clientAddr;
-	socklen_t clientSize = sizeof(clientAddr);
-	int clientSocket = accept(_socket, (sockaddr *)&clientAddr, &clientSize);
-	if(clientSocket == -1)
+	socklen_t client_addr_len = sizeof(_client_adrr);
+	int client_fd = accept(_socket, (struct sockaddr *)&_client_adrr, &client_addr_len);
+	if(client_fd < 0)
 	{
 		std::cerr << "Error: Client connection failed" << std::endl;
+		close(_socket);
 		//exit(1);
 	}
 	std::cout << "Client connected" << std::endl;
@@ -128,7 +128,7 @@ void IrcServer::startServer()
 	* 0: Protocol (IP)
 	*/
 	_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if(_socket == -1)
+	if(_socket < 0)
 	{
 		std::cerr << "Error: Socket creation failed" << std::endl;
 		//exit(1);
@@ -138,20 +138,30 @@ void IrcServer::startServer()
 	// sin_family: AF_INET - IPv4
 	// sin_port: Port number (htons to convert to big endian)
 	// sin_addr: IP address (INADDR_ANY to bind to all local interfaces)
-	sockaddr_in server;
-	server.sin_family = AF_INET;
-	server.sin_port = htons(_port);
-	server.sin_addr.s_addr = INADDR_ANY;
-	bind(_socket, (sockaddr *)&server, sizeof(server));
-	listen(_socket, 5);
-	std::cout << "Server started on port " << _port << std::endl;
+	memset(&_server_addr, 0, sizeof(_server_addr));
+	_server_addr.sin_family = AF_INET;
+	_server_addr.sin_port = htons(_port);
+	_server_addr.sin_addr.s_addr = INADDR_ANY;
+	if(bind(_socket, (sockaddr *)&_server_addr, sizeof(_server_addr)))
+	{
+		std::cerr << "Error: Bind failed" << std::endl;
+		close(_socket);
+		//exit(1);
+	}
+	if(listen(_socket, 5) < 0)
+	{
+		std::cerr << "Error: Listen failed" << std::endl;
+		close(_socket);
+		//exit(1);
+	}
+	std::cout << "Server started on port: " << _port << std::endl;
 }
 
 void IrcServer::run()
 {
 	while (1)
 	{
-		int event_count = poll(_poll_fds, 3, -1);
+		int event_count = poll(_poll_fds, 3, 0);
         if (event_count == -1)
         {
             std::cerr << "Error: poll() failed" << std::endl;

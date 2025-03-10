@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/03 12:19:29 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/07 09:12:48 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,6 @@ bool isNumber(std::string str)
 */
 bool checkArgs(int argc, char **argv, std::string args[])
 {
-	std::cout << "argc: " << argc << std::endl;
 	for(int i = 0; i < argc; i++)
 	{
 		args[i] = argv[i];
