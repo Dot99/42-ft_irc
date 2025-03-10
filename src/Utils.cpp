@@ -12,6 +12,15 @@
 
 #include "Utils.hpp"
 
+std::string cleanInput(std::string input)
+{
+	std::string cleaned_input = "";
+	for (std::size_t i = 0; i < input.length(); ++i)
+		if (input[i] != '\r' && input[i] != '\n')
+			cleaned_input += input[i];
+	return (cleaned_input);
+}
+
 /**
  * @brief Check if a string is a number
  * 

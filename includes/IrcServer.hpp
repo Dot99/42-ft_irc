@@ -21,28 +21,32 @@
 #include <poll.h>
 #include <map>
 #include <sstream>
+#include <vector>
 #include "Client.hpp"
+#include "Commands.hpp"
+#include "Utils.hpp"
 
 class Client;
+class Commands;
 
 class IrcServer
 {
 	private:
-		Client* _client;
 		int _port;
 		std::string _pwd;
 		int _socket;
 		struct sockaddr_in _server_addr;
-		struct pollfd _poll_fds[3];
+		std::vector<struct pollfd> _poll_fds;
 	public:
 		IrcServer(Client* client);
-		IrcServer(const std::string args[], Client* client);
+		IrcServer(const std::string args[]);
 		IrcServer &operator=(const IrcServer &rhs);
-		void setClient(Client* client);
 		int getSock() const;
 		std::string getPwd() const;
-		struct pollfd *getPollFds(); 
+		struct pollfd &getPollFds(int i);
+		void setPollFds(int i, int fd, short int revents); 
+		void setClient(Client* client);
 		virtual ~IrcServer();
 		void startServer();
-		void run();
+		void run(Client &client, Commands &commands);
 };

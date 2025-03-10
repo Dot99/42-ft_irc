@@ -20,28 +20,32 @@
 #include <string>
 #include <poll.h>
 #include "IrcServer.hpp"
+#include "Commands.hpp"
 
 class IrcServer;
-
-struct client_info
-{
-	bool isAuthenticated;
-	std::string nick;
-};
+class Commands;
 
 class Client
 {
 	private:
-		IrcServer* _server;
-		std::map<int, struct client_info> _clients;
+		IrcServer &_server;
 		struct sockaddr_in _client_adrr;
+		std::string _nick;
+		std::string _user;
+		bool _isAuthenticated;
 	public:
-		Client(IrcServer* server);
+		Client(IrcServer &server);
 		Client(const Client &rhs);
 		Client &operator=(const Client &rhs);
 		virtual ~Client();
-		void acceptClient(int client_fd);
-		void handleClientMessage(int client_fd);
+		void setNick(std::string nick);
+		void setUser(std::string user);
+		void setAuthenticated(bool auth);
+		std::string getNick();
+		std::string getUser();
+		bool getAuthenticated();
+		int acceptClient(int client_fd);
+		void handleClientMessage(int client_fd, Commands &commands);
 		void removeClient(int client_fd);
-		std::map<int, struct client_info> getInfo();
+		std::map<int, struct client_info> &getInfo();
 };

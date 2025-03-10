@@ -13,26 +13,73 @@
 #include "Client.hpp"
 #include "IrcServer.hpp"
 
-Client::Client(IrcServer* server) : _server(server), _clients()
+Client::Client(IrcServer &server) : _server(server)
 {
 };
-
-Client::Client(IrcServer* server) : _server(server)
-{
-}
 
 Client::~Client()
 {
 }
 
+/**
+ * @brief Set the Nick object
+ * 
+ * @param nick Nickname
+*/
+void Client::setNick(std::string nick)
+{
+	_nick = nick;
+}
 
 /**
- * @brief Get the Info object
+ * @brief Set the User object
  * 
+ * @param user Username
 */
-std::map<int, struct client_info> Client::getInfo()
+void Client::setUser(std::string user)
 {
-	return (_clients);
+	_user = user;
+}
+
+/**
+ * @brief Set the Authenticated object
+ * 
+ * @param auth If the client is authenticated
+*/
+void Client::setAuthenticated(bool auth)
+{
+	_isAuthenticated = auth;
+}
+
+/**
+ * @brief Get the Nick object
+ * 
+ * @return std::string Nickname
+*/
+std::string Client::getNick()
+{
+	return (_nick);
+}
+
+/**
+ * @brief Get the User object
+ * 
+ * @return std::string Username
+*/
+std::string Client::getUser()
+{
+	return (_user);
+}
+
+/**
+ * @brief Check if the client is authenticated
+ * 
+ * @return true If the client is authenticated
+ * @return false If the client is not authenticated
+*/
+bool Client::getAuthenticated()
+{
+	return (_isAuthenticated);
 }
 
 /**
@@ -44,30 +91,36 @@ void Client::removeClient(int client_fd)
 {
 	for (size_t i = 0; i < 1; i++)
 	{
-		if (_server->getPollFds()[i].fd == client_fd)
+		if (_server.getPollFds(i).fd == client_fd)
 		{
-			_server->getPollFds()[i] = _server->getPollFds()[1];
+			_server.getPollFds(i) = _server.getPollFds(1);
 			break;
 		}
 	}
-	_clients.erase(client_fd);
+	// _client.erase(client_fd);
 }
 
 /**
  * @brief Handles a client message
  * 
  * @param client_fd Client file descriptor
+ * @param commands Commands object
 */
-void Client::handleClientMessage(int client_fd)
+void Client::handleClientMessage(int client_fd, Commands &commands)
 {
     char buffer[1024];
+	if (_isAuthenticated == false)
+	{
+		commands.parseCommand(buffer, "", client_fd, buffer);
+		return;
+	}
     int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
     if (bytes_received < 0) // Client disconnected
     {
         std::cout << "Client " << client_fd << " disconnected." << std::endl;
         close(client_fd);
         removeClient(client_fd);
-		close(_server->getSock());
+		close(_server.getSock());
         return;
     }
     buffer[bytes_received] = '\0';
@@ -91,7 +144,7 @@ void Client::handleClientMessage(int client_fd)
 				Create channel
 			Join channel
 	*/
-
+	
 }
 
 
@@ -99,18 +152,20 @@ void Client::handleClientMessage(int client_fd)
  * @brief Accepts a client connection
  * 
 */
-void Client::acceptClient(int client_fd)
+int Client::acceptClient(int client_fd)
 {
+	std::cout << "poste nas virilhas" << std::endl;
 	socklen_t client_addr_len = sizeof(_client_adrr);
-	client_fd = accept(_server->getSock(), (struct sockaddr *)&_client_adrr, &client_addr_len);
+	client_fd = accept(_server.getSock(), (struct sockaddr *)&_client_adrr, &client_addr_len);
+	// std::cout << "a minha avo tem tetano" << std::endl;
 	if(client_fd < 0)
 	{
 		std::cerr << "Error: Client connection failed" << std::endl;
-		close(_server->getSock());
+		close(_server.getSock());
+		return -1;
 		//exit(1);
 	}
 	std::cout << "Client connected" << std::endl;
-
 	//Ask for password
 	char buffer[1024];
 	send(client_fd, "Enter password: ", 16, 0);
@@ -119,23 +174,19 @@ void Client::acceptClient(int client_fd)
 	{
 		std::cout << "Client " << client_fd << " disconnected." << std::endl;
 		close(client_fd);
-		close(_server->getSock());
-		return;
+		// close(_server.getSock());
+		return -1;
 	}
 	buffer[bytes_received] = '\0';
 	//Check password
 	std::string input(buffer);
-	std::string cleaned_input = "";
-	for (std::size_t i = 0; i < input.length(); ++i)
-		if (input[i] != '\r' && input[i] != '\n')
-			cleaned_input += input[i];
-	if (cleaned_input != _server->getPwd())
+	std::string cleaned_input = cleanInput(input);
+	if (cleaned_input != _server.getPwd())
 	{
 		send(client_fd, "Invalid password", 16, 0);
 		close(client_fd);
-		return ;
+		return -1;
 	}
-	//Add client to poll
-	_server->getPollFds()[0].fd = client_fd;
-	_server->getPollFds()[0].events = POLLIN;
+	send(client_fd, "PASS:\n", 6, 0);
+	return (client_fd);
 }

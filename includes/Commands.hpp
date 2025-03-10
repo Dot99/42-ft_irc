@@ -12,13 +12,17 @@
 
 #pragma once
 #include "Client.hpp"
+#include "IrcServer.hpp"
 
+class Client;
+class IrcServer;
 class Commands
 {
 	private:
-		/* data */
+		IrcServer &_server;
+		Client &_client;
 	public:
-		Commands();
+		Commands(IrcServer &server, Client &client);
 		~Commands();
-		void parseCommand(std::string command, std::string param, int client_fd, Client *client);
+		void parseCommand(std::string command, std::string param, int client_fd, char buffer[1024]);
 };

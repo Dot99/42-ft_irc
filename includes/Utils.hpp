@@ -13,3 +13,5 @@
 #include "IrcServer.hpp"
 
 bool checkArgs(int argc, char **argv, std::string args[]);
+
+std::string cleanInput(std::string input);

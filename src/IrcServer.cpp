@@ -16,7 +16,7 @@
  * @brief Construct a new Parameterized Irc Server:: Irc Server object
  * @param args Arguments
 */
-IrcServer::IrcServer(const std::string args[], Client* client) : _client(client)
+IrcServer::IrcServer(const std::string args[])
 {
 	std::istringstream iss(args[1]);
 	if (!(iss >> _port))
@@ -49,17 +49,6 @@ IrcServer &IrcServer::operator=(const IrcServer &rhs)
 }
 
 /**
- * @brief Set the Client object
- * 
- * @param client Client object
-*/
-
-void IrcServer::setClient(Client* client)
-{
-	_client = client;
-}
-
-/**
  * @brief Get the Socket object
  * 
  * @return int Socket
@@ -84,12 +73,23 @@ std::string IrcServer::getPwd() const
  * 
  * @return struct pollfd* Poll Fds
 */
-struct pollfd *IrcServer::getPollFds()
+struct pollfd &IrcServer::getPollFds(int i)
 {
-	return (_poll_fds);
+	return (_poll_fds[i]);
 }
 
-
+/**
+ * @brief Set the Poll Fds object
+ * 
+ * @param i Index
+ * @param fd File descriptor
+ * @param revents Events
+*/
+void IrcServer::setPollFds(int i, int fd, short int revents)
+{
+	_poll_fds[i].fd = fd;
+	_poll_fds[i].revents = revents;
+}
 /**
  * @brief Starts the IRC server
  * 
@@ -124,14 +124,14 @@ void IrcServer::startServer()
 	_server_addr.sin_family = AF_INET;
 	_server_addr.sin_port = htons(_port);
 	_server_addr.sin_addr.s_addr = INADDR_ANY;
-	if(bind(_socket, (sockaddr *)&_server_addr, sizeof(_server_addr)))
+	if (bind(_socket, (sockaddr *)&_server_addr, sizeof(_server_addr)))
 	{
 		std::cerr << "Error: Bind failed" << std::endl;
 		close(_socket);
 		throw std::exception();
 		//exit(1);
 	}
-	if(listen(_socket, 5) < 0)
+	if (listen(_socket, 5) < 0)
 	{
 		std::cerr << "Error: Listen failed" << std::endl;
 		close(_socket);
@@ -141,27 +141,43 @@ void IrcServer::startServer()
 	std::cout << "Server started on port: " << _port << std::endl;
 }
 
-void IrcServer::run()
+void IrcServer::run(Client &client, Commands &commands)
 {
-	_poll_fds[0].fd = _socket;
-	_poll_fds[0].events = POLLIN;
+	struct pollfd pfd;
+	pfd.fd = _socket;
+	pfd.events = POLLIN;
+	pfd.revents = 0;
+	_poll_fds.push_back(pfd);
 	while (1)
 	{
-		int event_count = poll(_poll_fds, 3, -1);
+		int event_count = poll(_poll_fds.data(), _poll_fds.size(), -1);
         if (event_count == -1)
         {
-            std::cerr << "Error: poll() failed" << std::endl;
+			std::cerr << "Error: poll() failed" << std::endl;
             break;
         }
-        for (size_t i = 0; i < 3; i++)
+        for (size_t i = 0; i < _poll_fds.size(); i++)
         {
-            if (_poll_fds[i].revents & POLLIN) 
+			// std::cout << "bater em sem abrigos" << std::endl;
+			if (_poll_fds[i].revents & POLLIN) 
             {
                 if (_poll_fds[i].fd == _socket)
-					_client->acceptClient(_poll_fds[i].fd);
+				{
+					int client_fd = client.acceptClient(_poll_fds[i].fd);
+					if (client_fd < 0)
+					{
+						std::cerr << "Error accepting client" << std::endl;
+						return;
+					}
+					struct pollfd newPoll;
+					newPoll.fd = client_fd;
+					newPoll.events = POLLIN;
+					newPoll.revents = 0;
+					_poll_fds.push_back(newPoll);
+				}
                 else
-                	_client->handleClientMessage(_poll_fds[i].fd);
-            }
+                	client.handleClientMessage(_poll_fds[i].fd, commands);
+            }	
 		}
 	}
 }

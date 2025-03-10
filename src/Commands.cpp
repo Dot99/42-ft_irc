@@ -12,7 +12,7 @@
 
 #include "Commands.hpp"
 
-Commands::Commands()
+Commands::Commands(IrcServer &server, Client &client): _server(server), _client(client)
 {
 }
 
@@ -20,33 +20,55 @@ Commands::~Commands()
 {
 }
 
-void Commands::parseCommand(std::string command, std::string param, int client_fd, Client *client)
+void Commands::parseCommand(std::string command, std::string param, int client_fd, char buffer[1024])
 {
 	std::istringstream iss(buffer);
-	std::string command, param;
 	iss >> command >> param;
-	if (command != "PASS")
+	char bufffer[1024];
+	int bytes_received = recv(client_fd, bufffer, sizeof(bufffer) - 1, 0);
+	if (bytes_received <= 0) // Client disconnected
 	{
-		send(client_fd, "ERROR :You must authenticate with PASS first\r\n", 46, 0);
+		std::cout << "Client " << client_fd << " disconnected." << std::endl;
+		close(client_fd);
+		// close(_server.getSock());
 		return;
+	}
+	bufffer[bytes_received] = '\0';
+	std::string input(bufffer);
+	std::string cleaned_input = cleanInput(input);
+	if (cleaned_input == _server.getPwd())
+	{
+		_client.setAuthenticated(true);
+		send(client_fd, "NICK:\n", 5, 0);
+		bytes_received = recv(client_fd, buffer, sizeof(bufffer) - 1, 0);
+		if (bytes_received <= 0) // Client disconnected
+		{
+			std::cout << "Client " << client_fd << " disconnected." << std::endl;
+			close(client_fd);
+			// close(_server.getSock());
+			return;
+		}
+		buffer[bytes_received] = '\0';
+		_client.setNick(buffer);
+		send(client_fd, "USER:\n", 5, 0);
+		bytes_received = recv(client_fd, buffer, sizeof(bufffer) - 1, 0);
+		if (bytes_received <= 0) // Client disconnected
+		{
+			std::cout << "Client " << client_fd << " disconnected." << std::endl;
+			close(client_fd);
+			// close(_server.getSock());
+			return;
+		}
+		buffer[bytes_received] = '\0';
+		_client.setUser(buffer);
+		std::string welcome = "Welcome to IRC server\n\nYour Data\nNick:" +
+		_client.getUser() + "User:" + _client.getNick() + "\n";
+		send(client_fd, welcome.c_str(), welcome.length(), 0);
 	}
 	else
 	{
-		if (_clients[client_fd].isAuthenticated)
-		{
-			send(client_fd, "ERROR: Already authenticated\r\n", 30, 0);
-			return;
-		}
-		if (param == _server->getPwd())
-		{
-			_clients[client_fd].isAuthenticated = true;
-			send(client_fd, "Password accepted. Please send NICK and USER.\r\n", 46, 0);
-		}
-		else
-		{
-			send(client_fd, "ERROR :Incorrect password\r\n", 27, 0);
-			close(client_fd);
-			removeClient(client_fd);
-		}
+		send(client_fd, "ERROR :Incorrect password\r\n\n", 27, 0);
+		close(client_fd);
+		_client.removeClient(client_fd);
 	}		
 }

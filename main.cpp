@@ -12,6 +12,7 @@
 
 #include "IrcServer.hpp"
 #include "Client.hpp"
+#include "Commands.hpp"
 #include "Utils.hpp"
 #include <string>
 
@@ -22,10 +23,10 @@ int main(int argc, char **argv)
 		return(1);
 	try
 	{
-		IrcServer* server = new IrcServer(args, NULL);
+		IrcServer server(args);
 		Client client(server);
-		server->setClient(&client);
-		server->run();
+		Commands commands(server, client);
+		server.run(client, commands);
 	}
 	catch(const std::exception& e)
 	{
