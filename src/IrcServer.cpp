@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/10 11:12:17 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/11 12:46:21 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,7 +158,6 @@ void IrcServer::run(Client &client, Commands &commands)
         }
         for (size_t i = 0; i < _poll_fds.size(); i++)
         {
-			// std::cout << "bater em sem abrigos" << std::endl;
 			if (_poll_fds[i].revents & POLLIN) 
             {
                 if (_poll_fds[i].fd == _socket)
@@ -174,6 +173,7 @@ void IrcServer::run(Client &client, Commands &commands)
 					newPoll.events = POLLIN;
 					newPoll.revents = 0;
 					_poll_fds.push_back(newPoll);
+					send(client_fd, "NICK:\n", 5, 0);
 				}
                 else
                 	client.handleClientMessage(_poll_fds[i].fd, commands);

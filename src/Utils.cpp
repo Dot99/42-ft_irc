@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   utils.cpp                                          :+:      :+:    :+:   */
+/*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/10 10:25:19 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/11 12:46:40 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ bool checkArgs(int argc, char **argv, std::string args[])
 	for(int i = 0; i < argc; i++)
 	{
 		args[i] = argv[i];
-		std::cout << "args[" << i << "]: " << args[i] << std::endl;
+		//std::cout << "args[" << i << "]: " << args[i] << std::endl;
 	}
 	if(argc != 3)
 	{
@@ -86,4 +86,51 @@ bool checkArgs(int argc, char **argv, std::string args[])
 		return (true);
 	}
 	return (false);
+}
+
+/**
+ * @brief Reads input from the client until a newline (`\n`) or reaches the max allowed length. Excess input is discarded to prevent buffer overflows.
+ * @param client_fd File descriptor of the client
+ * @param max_length Maximum length of the input
+ */
+std::string readLine(int client_fd, unsigned long max_length) {
+    std::string input;
+    char c;
+    int bytes_received;
+    bool too_long = false;
+
+	//TODO:: Improve readline to void clean input
+    while ((bytes_received = recv(client_fd, &c, 1, 0)) > 0) {
+        if (c == '\n')  // End of input
+            break;
+        if (!too_long) {
+            if (input.size() < max_length) {
+                input += c;
+            } else {
+                too_long = true;  // Mark that we are exceeding the limit
+            }
+        }
+    }
+
+    // Discard any remaining input if it was too long
+    if (too_long) {
+        char discard_buffer[256];
+        while (recv(client_fd, discard_buffer, sizeof(discard_buffer), MSG_DONTWAIT) > 0);
+        return "";  // Return empty string to indicate an error
+    }
+
+    return input;
+}
+
+void sendClientMsg(int client_fd, const char *msg, int flags) {
+    std::time_t now = std::time(NULL);
+    std::tm* localTime = std::localtime(&now);
+    int hour = localTime->tm_hour;
+	int min = localTime->tm_min;
+	std::stringstream ss;
+    ss << "[" << hour << ":" << min << "] " << msg;
+	std::string full_msg = ss.str();
+	if (send(client_fd, full_msg.c_str(), full_msg.length(), flags) == -1) {
+		std::cerr << "Error: send() failed" << std::endl;
+	}
 }
