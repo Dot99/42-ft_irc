@@ -11,16 +11,6 @@
 /* ************************************************************************** */
 
 #pragma once
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <cstring>
-#include <iostream>
-#include <unistd.h>
-#include <string>
-#include <poll.h>
-#include "IrcServer.hpp"
-#include "Commands.hpp"
 #include "Utils.hpp"
 
 
@@ -42,6 +32,9 @@ class Client
 		std::map<std::string, std::string>::iterator getNick(std::string nick);
 		std::string getUserPass(std::string nick);
 		bool getAuthenticated();
+		void validateUser(int client_fd);
+		void addUserData(std::string nick, std::string pass);
+		void removeUserData(std::string nick);
 		int acceptClient(int client_fd);
 		void handleClientMessage(int client_fd, Commands &commands);
 		void removeClient(int client_fd);

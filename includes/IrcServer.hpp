@@ -11,21 +11,7 @@
 /* ************************************************************************** */
 
 #pragma once
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <cstring>
-#include <iostream>
-#include <unistd.h>
-#include <string>
-#include <poll.h>
-#include <map>
-#include <sstream>
-#include <vector>
-#include "Client.hpp"
-#include "Commands.hpp"
 #include "Utils.hpp"
-#include "Channel.hpp"
 
 class Client;
 class Commands;
@@ -40,7 +26,7 @@ class IrcServer
 		struct sockaddr_in _server_addr;
 		std::vector<struct pollfd> _poll_fds;
 		std::vector<Channel *> _channels;
-
+		std::vector<Client *> _users;
 	public:
 		IrcServer(Client* client);
 		IrcServer(const std::string args[]);
@@ -51,6 +37,7 @@ class IrcServer
 		struct pollfd &getPollFds(int i);
 		void setPollFds(int i, int fd, short int revents); 
 		void addChannel(Channel *channel);
+		void addUser(Client *client);
 		void startServer();
 		void run(Client &client, Commands &commands);
 };

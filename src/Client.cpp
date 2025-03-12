@@ -47,6 +47,74 @@ void Client::removeClient(int client_fd)
 }
 
 /**
+ * @brief Adds a user to the map
+ * 
+ * @param nick Nickname
+ * @param pass Password
+*/
+void Client::addUserData(std::string nick, std::string pass)
+{
+	if (!_user[nick].empty())
+	{
+		_user[nick] = pass;
+	}
+}
+
+
+void Client::validateUser(int client_fd)
+{
+	std::string inputNick = readLine(client_fd, 9); //(9) Max Nickname characters
+	if(inputNick.empty())
+	{
+		//TODO: Send user to nick again due to error
+		send(client_fd, "Invalid nickname\n", 17, 0);
+		close(client_fd);
+		//return (-1);
+	}
+	if (inputNick == getNick(inputNick)->first)
+	{
+		send(client_fd, "PASS:\n", 5, 0);
+		std::string inputPwd = readLine(client_fd, 510); //(510) Max pwd characters
+		if(inputPwd.empty())
+		{
+			//TODO: Send user to nick again due to error
+			send(client_fd, "Invalid password\n", 17, 0);
+			close(client_fd);
+			//return (-1);
+		}
+		if(inputPwd == getUserPass(inputNick))
+		{
+			setUser(inputNick, inputPwd);
+			setAuthenticated(true);
+			std::map<std::string, std::string>::iterator it = getNick(inputNick);
+			std::string welcome = "Welcome to IRC server\n\nYour Data:\n" + it->first + "\n";
+			send(client_fd, welcome.c_str(), welcome.length(), 0);
+		}
+		else
+		{
+			send(client_fd, "Invalid password\n", 17, 0);
+			close(client_fd);
+		}
+	}
+	else
+	{
+		setUser(inputNick, "");
+		send(client_fd, "PASS:\n", 5, 0);
+		std::string inputPwd = readLine(client_fd, 510); //(510) Max pwd characters
+		if(inputPwd.empty())
+		{
+			//TODO: Send user to nick again due to error
+			send(client_fd, "Invalid password\n", 17, 0);
+			close(client_fd);
+			//return (-1);
+		}
+		setUser(inputNick, inputPwd);
+		// setAuthenticated(true);
+		send(client_fd, "Welcome to IRC server\n", 22, 0);
+	}
+}
+
+/**
  * @brief Handles a client message
  * 
  * @param client_fd Client file descriptor
@@ -55,11 +123,6 @@ void Client::removeClient(int client_fd)
 void Client::handleClientMessage(int client_fd, Commands &commands)
 {
     char buffer[1024];
-	if (_isAuthenticated == false)
-	{
-		commands.validateUser(client_fd);
-		return;
-	}
     int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
     if (bytes_received < 0) // Client disconnected
     {
@@ -106,8 +169,7 @@ int Client::checkPwd(int client_fd)
 		close(client_fd);
 		return (-1);
 	}
-	std::string cleaned_input = cleanInput(input);
-	if (cleaned_input != _server.getPwd())
+	if (input != _server.getPwd())
 	{
 		send(client_fd, "Invalid password", 16, 0);
 		close(client_fd);
@@ -127,7 +189,7 @@ int Client::acceptClient(int client_fd)
 	if(client_fd < 0)
 	{
 		std::cerr << "Error: Client connection failed" << std::endl;
-		close(_server.getSock());
+		// close(_server.getSock());
 		return(-1);
 	}
 	std::cout << "Client connected" << std::endl;

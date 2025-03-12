@@ -12,15 +12,6 @@
 
 #include "Utils.hpp"
 
-std::string cleanInput(std::string input)
-{
-	std::string cleaned_input = "";
-	for (std::size_t i = 0; i < input.length(); ++i)
-		if (input[i] != '\r' && input[i] != '\n')
-			cleaned_input += input[i];
-	return (cleaned_input);
-}
-
 /**
  * @brief Check if a string is a number
  * 
@@ -99,9 +90,8 @@ std::string readLine(int client_fd, unsigned long max_length) {
     int bytes_received;
     bool too_long = false;
 
-	//TODO:: Improve readline to void clean input
     while ((bytes_received = recv(client_fd, &c, 1, 0)) > 0) {
-        if (c == '\n')  // End of input
+        if (c == '\n' || c == '\r')  // End of input
             break;
         if (!too_long) {
             if (input.size() < max_length) {

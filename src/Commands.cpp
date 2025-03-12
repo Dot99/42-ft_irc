@@ -15,68 +15,11 @@
 Commands::Commands(IrcServer &server, Client &client): _server(server), _client(client)
 {
 	(void)_server;
+	(void)_client;
 }
 
 Commands::~Commands()
 {
-}
-
-void Commands::validateUser(int client_fd)
-{
-	std::string inputNick = readLine(client_fd, 9); //(9) Max Nickname characters
-	if(inputNick.empty())
-	{
-		//TODO: Send user to nick again due to error
-		send(client_fd, "Invalid nickname\n", 17, 0);
-		close(client_fd);
-		//return (-1);
-	}
-	std::string cleaned_input_nick = cleanInput(inputNick);
-	if(cleaned_input_nick == _client.getNick(cleaned_input_nick)->first)
-	{
-		send(client_fd, "PASS:\n", 5, 0);
-		std::string inputPwd = readLine(client_fd, 510); //(510) Max pwd characters
-		if(inputPwd.empty())
-		{
-			//TODO: Send user to nick again due to error
-			send(client_fd, "Invalid nickname\n", 17, 0);
-			close(client_fd);
-			//return (-1);
-		}
-		std::string cleaned_input_pwd = cleanInput(inputPwd);
-		if(cleaned_input_pwd == _client.getUserPass(cleaned_input_nick))
-		{
-			_client.setUser(cleaned_input_nick, cleaned_input_pwd);
-			_client.setAuthenticated(true);
-			std::map<std::string, std::string>::iterator it = _client.getNick(cleaned_input_nick);
-			std::string welcome = "Welcome to IRC server\n\nYour Data:\n" + it->first + "\n";
-			send(client_fd, welcome.c_str(), welcome.length(), 0);
-		}
-		else
-		{
-			send(client_fd, "Invalid password\n", 17, 0);
-			close(client_fd);
-		}
-	}
-	else
-	{
-		_client.setUser(cleaned_input_nick, "");
-		send(client_fd, "PASS:\n", 5, 0);
-		std::string inputPwd = readLine(client_fd, 510); //(510) Max pwd characters
-		if(inputPwd.empty())
-		{
-			//TODO: Send user to nick again due to error
-			send(client_fd, "Invalid password\n", 17, 0);
-			close(client_fd);
-			//return (-1);
-		}
-		std::string cleaned_input_pwd = cleanInput(inputPwd);
-		_client.setUser(cleaned_input_nick, cleaned_input_pwd);
-		_client.setAuthenticated(true);
-		std::map<std::string, std::string>::iterator it = _client.getNick(cleaned_input_nick);
-		std::string welcome = "Welcome to IRC server\n\nYour Data:\n" + it->first + "\n";
-		send(client_fd, welcome.c_str(), welcome.length(), 0);
-	}
 }
 
 void Commands::parseCommand(int client_fd, std::string command)

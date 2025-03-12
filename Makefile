@@ -18,7 +18,7 @@ VPATH = src
 RM = rm -rf
 
 NAME = ircserv
-SRC = main.cpp IrcServer.cpp Utils.cpp Client.cpp Commands.cpp
+SRC = main.cpp IrcServer.cpp Utils.cpp Client.cpp Commands.cpp Channel.cpp
 
 OBJ_DIR = obj
 OBJ = $(SRC:%.cpp=$(OBJ_DIR)/%.o)

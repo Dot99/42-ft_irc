@@ -102,6 +102,16 @@ void IrcServer::addChannel(Channel *channel)
 }
 
 /**
+ * @brief Set the Client object
+ * 
+ * @param client Client
+*/
+void IrcServer::addUser(Client *client)
+{
+	_users.push_back(client);
+}
+
+/**
  * @brief Starts the IRC server
  * 
 */
@@ -179,7 +189,7 @@ void IrcServer::run(Client &client, Commands &commands)
 					if (client_fd < 0)
 					{
 						std::cerr << "Error accepting client" << std::endl;
-						return;
+						// return;
 					}
 					struct pollfd newPoll;
 					newPoll.fd = client_fd;
@@ -187,6 +197,7 @@ void IrcServer::run(Client &client, Commands &commands)
 					newPoll.revents = 0;
 					_poll_fds.push_back(newPoll);
 					send(client_fd, "NICK:\n", 5, 0);
+					client.validateUser(client_fd);
 				}
                 else
                 	client.handleClientMessage(_poll_fds[i].fd, commands);

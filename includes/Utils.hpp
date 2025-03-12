@@ -10,12 +10,25 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "IrcServer.hpp"
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <cstring>
 #include <ctime>
+#include <iostream>
+#include <unistd.h>
+#include <string>
+#include <poll.h>
+#include <map>
 #include <sstream>
+#include <vector>
+
+#include "Client.hpp"
+#include "Commands.hpp"
+#include "Channel.hpp"
+#include "IrcServer.hpp"
+
 
 bool checkArgs(int argc, char **argv, std::string args[]);
 std::string readLine(int client_fd, unsigned long max_length);
 void sendClientMsg(int client_fd, const char *msg, int flags);
-
-std::string cleanInput(std::string input);

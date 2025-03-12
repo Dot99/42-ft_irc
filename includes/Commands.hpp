@@ -11,8 +11,6 @@
 /* ************************************************************************** */
 
 #pragma once
-#include "Client.hpp"
-#include "IrcServer.hpp"
 #include "Utils.hpp"
 
 class Client;
@@ -26,5 +24,4 @@ class Commands
 		Commands(IrcServer &server, Client &client);
 		~Commands();
 		void parseCommand(int client_fd, std::string command);
-		void validateUser(int client_fd);
 };

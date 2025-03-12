@@ -1,5 +1,7 @@
-#include "IrcServer.hpp"
+#pragma once
+#include "Utils.hpp"	
 
+class Client;
 class Channel
 {
     private:
