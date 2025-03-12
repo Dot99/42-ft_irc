@@ -90,6 +90,17 @@ void IrcServer::setPollFds(int i, int fd, short int revents)
 	_poll_fds[i].fd = fd;
 	_poll_fds[i].revents = revents;
 }
+
+/**
+ * @brief Set the Client object
+ * 
+ * @param client Client
+*/
+void IrcServer::addChannel(Channel *channel)
+{
+	_channels.push_back(channel);
+}
+
 /**
  * @brief Starts the IRC server
  * 
@@ -139,6 +150,8 @@ void IrcServer::startServer()
 		//exit(1);
 	}
 	std::cout << "Server started on port: " << _port << std::endl;
+	Channel *channel = new Channel("general");
+	addChannel(channel);
 }
 
 void IrcServer::run(Client &client, Commands &commands)

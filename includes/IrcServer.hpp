@@ -25,9 +25,11 @@
 #include "Client.hpp"
 #include "Commands.hpp"
 #include "Utils.hpp"
+#include "Channel.hpp"
 
 class Client;
 class Commands;
+class Channel;
 
 class IrcServer
 {
@@ -37,16 +39,18 @@ class IrcServer
 		int _socket;
 		struct sockaddr_in _server_addr;
 		std::vector<struct pollfd> _poll_fds;
+		std::vector<Channel *> _channels;
+
 	public:
 		IrcServer(Client* client);
 		IrcServer(const std::string args[]);
 		IrcServer &operator=(const IrcServer &rhs);
+		virtual ~IrcServer();
 		int getSock() const;
 		std::string getPwd() const;
 		struct pollfd &getPollFds(int i);
 		void setPollFds(int i, int fd, short int revents); 
-		void setClient(Client* client);
-		virtual ~IrcServer();
+		void addChannel(Channel *channel);
 		void startServer();
 		void run(Client &client, Commands &commands);
 };
