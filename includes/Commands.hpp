@@ -18,6 +18,7 @@ class Commands
 {
 	private:
 		IrcServer &_server;
+		Client *_user;
 	public:
 		Commands(IrcServer &server);
 		~Commands();

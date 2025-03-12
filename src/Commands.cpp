@@ -47,7 +47,6 @@ void Commands::joinCommand(int client_fd, std::string restOfCommand)
 	std::string inputChannel = restOfCommand;
 	bool channelExists = false;
 	std::string msg;
-	Client *user = _server.getUserFd(client_fd);
 	if(inputChannel.empty())
 	{
 		send(client_fd, "Invalid channel\n", 16, 0);
@@ -70,11 +69,11 @@ void Commands::joinCommand(int client_fd, std::string restOfCommand)
 			channelExists = true;
 			for (size_t j = 0; j < _server.getChannels()[i]->getUsers().size(); j++)
 			{
-				if (_server.getChannels()[i]->getUsers()[j]->getNick() !=user->getNick())
+				if (_server.getChannels()[i]->getUsers()[j]->getNick() != _user->getNick())
 				{
-					_server.getChannels()[i]->addUser(user);
-					user->setChannel(_server.getChannels()[i]);
-					msg = "User " + user->getNick() + " added to channel: " + _server.getChannels()[i]->getName() + "\n";
+					_server.getChannels()[i]->addUser(_user);
+					_user->setChannel(_server.getChannels()[i]);
+					msg = "User " + _user->getNick() + " added to channel: " + _server.getChannels()[i]->getName() + "\n";
 					send(client_fd, msg.c_str(), msg.length(), 0);
 					std::cout << msg;
 					break;
@@ -87,9 +86,9 @@ void Commands::joinCommand(int client_fd, std::string restOfCommand)
 	{
 		Channel *channel = new Channel(inputChannel);
 		_server.addChannel(channel);
-		_server.getChannels()[_server.getChannels().size() - 1]->addUser(user);
-		user->setChannel(_server.getChannels()[_server.getChannels().size() - 1]);
-		msg = "Channel " + _server.getChannels()[_server.getChannels().size() - 1]->getName() + " created and user " + user->getNick() + " added\n";
+		_server.getChannels()[_server.getChannels().size() - 1]->addUser(_user);
+		_user->setChannel(_server.getChannels()[_server.getChannels().size() - 1]);
+		msg = "Channel " + _server.getChannels()[_server.getChannels().size() - 1]->getName() + " created and user " + _user->getNick() + " added\n";
 		send(client_fd, msg.c_str(), msg.length(), 0);
 		std::cout << msg;
 	}
@@ -104,15 +103,14 @@ void Commands::leaveCommand(int client_fd)
 {
 	//TODO: Leave command have a message to send to the channel
 	std::string inputChannel = readLine(client_fd, 200); //(200) Max Channel characters
-	Client *user = _server.getUserFd(client_fd);
 	if(inputChannel.empty())
 	{
 		send(client_fd, "Invalid channel\n", 16, 0);
 	}
-	if (user->getChannel())
+	if (_user->getChannel())
 	{
-		user->getChannel()->removeUser(user);
-		user->setChannel(NULL);
+		_user->getChannel()->removeUser(_user);
+		_user->setChannel(NULL);
 	}
 	else
 		send(client_fd, "User is not in a channel\n", 25, 0);
@@ -137,7 +135,6 @@ void Commands::listCommand(int client_fd, std::string restOfCommand)
 			send(client_fd, _server.getChannels()[i]->getName().c_str(), _server.getChannels()[i]->getName().length(), 0);
 			send(client_fd, "\n", 1, 0);
 		}
-		
 	}
 	else
 	{
@@ -218,7 +215,7 @@ void Commands::parseCommand(int client_fd, std::string command)
 	int i = 0;
     std::string foundCommand;
     std::string restOfCommand;
-
+	_user = _server.getUserFd(client_fd);
     for(; i < 10; i++)
     {
         size_t pos = command.find(commands[i]);
