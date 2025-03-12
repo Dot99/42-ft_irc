@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/11 12:58:55 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/12 09:32:10 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ void Client::handleClientMessage(int client_fd, Commands &commands)
     char buffer[1024];
 	if (_isAuthenticated == false)
 	{
-		commands.parseCommand(client_fd);
+		commands.validateUser(client_fd);
 		return;
 	}
     int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
@@ -70,7 +70,7 @@ void Client::handleClientMessage(int client_fd, Commands &commands)
         return;
     }
     buffer[bytes_received] = '\0';
-    std::cout << buffer << std::endl;
+    commands.parseCommand(client_fd, buffer);
     // TODO: Parse and process IRC commands here
 	/*
 		Check if there is a command sent by client
