@@ -71,7 +71,7 @@ void Client::validateUser(int client_fd)
 		close(client_fd);
 		//return (-1);
 	}
-	if (inputNick == getNick(inputNick)->first)
+	if (inputNick == getNick())
 	{
 		send(client_fd, "PASS:\n", 5, 0);
 		std::string inputPwd = readLine(client_fd, 510); //(510) Max pwd characters
@@ -82,13 +82,11 @@ void Client::validateUser(int client_fd)
 			close(client_fd);
 			//return (-1);
 		}
-		if(inputPwd == getUserPass(inputNick))
+		if(inputPwd == getPass())
 		{
 			setUser(inputNick, inputPwd);
 			setAuthenticated(true);
-			std::map<std::string, std::string>::iterator it = getNick(inputNick);
-			std::string welcome = "Welcome to IRC server\n\nYour Data:\n" + it->first + "\n";
-			send(client_fd, welcome.c_str(), welcome.length(), 0);
+			send(client_fd, "Welcome to IRC server\n\n", 23, 0);
 		}
 		else
 		{
@@ -110,7 +108,16 @@ void Client::validateUser(int client_fd)
 		}
 		setUser(inputNick, inputPwd);
 		// setAuthenticated(true);
-		send(client_fd, "Welcome to IRC server\n", 22, 0);
+		std::string listOfComands = "\n\nList of comands:\n/nick /join /leave /list /users /exit /kick /invite /topic /mode\n\n";
+		send(client_fd, listOfComands.c_str(), listOfComands.length(), 0);
+	}
+	if (_server.getChannels()[1])
+	{
+		std::cout << "users in channels: " << _server.getChannels()[1]->getUsers().size() << std::endl;
+		if (_server.getChannels()[1]->getUsers()[0])
+		{
+			std::cout << "users in channels: " << _server.getChannels()[1]->getUsers()[0]->getNick() << std::endl;
+		}
 	}
 }
 
@@ -206,13 +213,14 @@ int Client::acceptClient(int client_fd)
 
 
 /**
- * @brief Get the Nick object
+ * @brief Set the Nick object
  * 
  * @return std::string Nickname
 */
 void Client::setUser(std::string nick, std::string pass)
 {
-	_user[nick] = pass;
+	_nick = nick;
+	_pass = pass;
 }
 
 /**
@@ -220,9 +228,49 @@ void Client::setUser(std::string nick, std::string pass)
  * 
  * @return std::string Nickname
 */
-std::map<std::string, std::string>::iterator Client::getNick(std::string nick)
+std::string Client::getNick()
 {
-    return _user.find(nick);
+    return _nick;
+}
+
+/**
+ * @brief Set the Client File Descriptor
+ * 
+ * @param fd File Descriptor
+*/
+void Client::setFd(int fd)
+{
+	this->fd = fd;
+}
+
+/**
+ * @brief Set the Channel object
+ * 
+ * @param channel Channel
+*/
+void Client::setChannel(Channel *channel)
+{
+	_channel = channel;
+}
+
+/**
+ * @brief Get the Channel object
+ * 
+ * @return Channel* Channel
+*/
+Channel *Client::getChannel()
+{
+	return _channel;
+}
+
+/**
+ * @brief Get the Client File Descriptor
+ * 
+ * @return int File Descriptor
+*/
+int Client::getFd()
+{
+	return fd;
 }
 
 /**
@@ -230,9 +278,9 @@ std::map<std::string, std::string>::iterator Client::getNick(std::string nick)
  * 
  * @return std::string Nickname
 */
-std::string Client::getUserPass(std::string nick)
+std::string Client::getPass()
 {
-	return (_user[nick]);
+	return _pass;
 }
 
 /**

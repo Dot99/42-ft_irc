@@ -79,6 +79,44 @@ struct pollfd &IrcServer::getPollFds(int i)
 }
 
 /**
+ * @brief Get the Channels object
+ * 
+ * @return std::vector<Channel *> Channels
+*/
+std::vector<Channel *> IrcServer::getChannels() const
+{
+	return (_channels);
+}
+
+/**
+ * @brief Get the Users object
+ * 
+ * @return std::vector<Client *> Users
+*/
+std::vector<Client *> IrcServer::getUsers() const
+{
+	return (_users);
+}
+
+/**
+ * @brief Get the User Fd object
+ * 
+ * @param fd File descriptor
+ * @return std::vector<Client *> Users
+*/
+Client *IrcServer::getUserFd(int fd)
+{
+    for (size_t i = 0; i < _users.size(); i++)
+    {
+        if (_users[i]->getFd() == fd)
+        {
+            return _users[i];
+        }
+    }
+    return NULL;
+}
+
+/**
  * @brief Set the Poll Fds object
  * 
  * @param i Index
@@ -99,6 +137,7 @@ void IrcServer::setPollFds(int i, int fd, short int revents)
 void IrcServer::addChannel(Channel *channel)
 {
 	_channels.push_back(channel);
+
 }
 
 /**
@@ -164,8 +203,9 @@ void IrcServer::startServer()
 	addChannel(channel);
 }
 
-void IrcServer::run(Client &client, Commands &commands)
+void IrcServer::run(Commands &commands)
 {
+	int client_fd = 0;
 	struct pollfd pfd;
 	pfd.fd = _socket;
 	pfd.events = POLLIN;
@@ -185,22 +225,27 @@ void IrcServer::run(Client &client, Commands &commands)
             {
                 if (_poll_fds[i].fd == _socket)
 				{
-					int client_fd = client.acceptClient(_poll_fds[i].fd);
+					Client *newClient = new Client(*this);
+					addUser(newClient);
+					client_fd = _users.back()->acceptClient(_poll_fds[i].fd);
 					if (client_fd < 0)
 					{
 						std::cerr << "Error accepting client" << std::endl;
 						// return;
 					}
+					_users.back()->setFd(client_fd);
 					struct pollfd newPoll;
 					newPoll.fd = client_fd;
 					newPoll.events = POLLIN;
 					newPoll.revents = 0;
 					_poll_fds.push_back(newPoll);
 					send(client_fd, "NICK:\n", 5, 0);
-					client.validateUser(client_fd);
+					_users.back()->validateUser(client_fd);
 				}
                 else
-                	client.handleClientMessage(_poll_fds[i].fd, commands);
+				{
+					getUserFd(_poll_fds[i].fd)->handleClientMessage(_poll_fds[i].fd, commands);
+				}
             }	
 		}
 	}

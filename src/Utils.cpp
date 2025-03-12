@@ -124,3 +124,14 @@ void sendClientMsg(int client_fd, const char *msg, int flags) {
 		std::cerr << "Error: send() failed" << std::endl;
 	}
 }
+
+std::string clean_input(std::string input)
+{
+	std::string result;
+    for (std::string::iterator it = input.begin(); it != input.end(); ++it)
+	{
+        if (*it != '\n' && *it != '\r' && *it != ' ')
+            result += *it;
+    }
+	return result;
+}

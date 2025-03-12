@@ -16,11 +16,16 @@
 
 class IrcServer;
 class Commands;
+class Channel;
 
 class Client
 {
 	private:
 		IrcServer &_server;
+		Channel *_channel;
+		int fd;
+		std::string _nick;
+		std::string _pass;
 		struct sockaddr_in _client_adrr;
 		std::map<std::string, std::string> _user;
 		bool _isAuthenticated;
@@ -29,9 +34,13 @@ class Client
 		virtual ~Client();
 		void setAuthenticated(bool auth);
 		void setUser(std::string nick, std::string pass);
-		std::map<std::string, std::string>::iterator getNick(std::string nick);
-		std::string getUserPass(std::string nick);
+		std::string getNick();
+		std::string getPass();
 		bool getAuthenticated();
+		int getFd();
+		void setFd(int fd);
+		void setChannel(Channel *channel);
+		Channel *getChannel();
 		void validateUser(int client_fd);
 		void addUserData(std::string nick, std::string pass);
 		void removeUserData(std::string nick);

@@ -13,15 +13,13 @@
 #pragma once
 #include "Utils.hpp"
 
-class Client;
 class IrcServer;
 class Commands
 {
 	private:
 		IrcServer &_server;
-		Client &_client;
 	public:
-		Commands(IrcServer &server, Client &client);
+		Commands(IrcServer &server);
 		~Commands();
 		void nickCommand(int client_fd, std::string restOfCommand);
 		void joinCommand(int client_fd, std::string restOfCommand);

@@ -35,9 +35,12 @@ class IrcServer
 		int getSock() const;
 		std::string getPwd() const;
 		struct pollfd &getPollFds(int i);
+		std::vector<Channel *> getChannels() const;
+		std::vector<Client *> getUsers() const;
+		Client * getUserFd(int fd);
 		void setPollFds(int i, int fd, short int revents); 
 		void addChannel(Channel *channel);
 		void addUser(Client *client);
 		void startServer();
-		void run(Client &client, Commands &commands);
+		void run(Commands &commands);
 };

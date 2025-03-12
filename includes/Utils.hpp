@@ -22,6 +22,7 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include <signal.h>
 
 #include "Client.hpp"
 #include "Commands.hpp"
@@ -32,3 +33,4 @@
 bool checkArgs(int argc, char **argv, std::string args[]);
 std::string readLine(int client_fd, unsigned long max_length);
 void sendClientMsg(int client_fd, const char *msg, int flags);
+std::string clean_input(std::string input);

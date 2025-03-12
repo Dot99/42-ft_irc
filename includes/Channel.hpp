@@ -6,12 +6,17 @@ class Channel
 {
     private:
         std::string _name;
-        std::vector<Client *> _clients;
+		std::string _password;
+		std::string _topic;
+		std::string _mode;
+        std::vector<Client *> _users;
+		std::vector<Client *> _operators;
     public:
         Channel(std::string name);
         ~Channel();
-        void addClient(Client *client);
-        void removeClient(Client *client);
+        void addUser(Client *client);
+        void removeUser(Client *client);
         std::string getName() const;
-        std::vector<Client *> getClients() const;
+        std::vector<Client *> getUsers() const;
+		Client * getUserFd(int fd);
 };

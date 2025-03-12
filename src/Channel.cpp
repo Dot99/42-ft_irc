@@ -9,18 +9,18 @@ Channel::~Channel()
 {
 }
 
-void Channel::addClient(Client *client)
+void Channel::addUser(Client *client)
 {
-    _clients.push_back(client);
-}
- 
-void Channel::removeClient(Client *client)
+    _users.push_back(client);
+}	
+
+void Channel::removeUser(Client *client)
 {
-    for (size_t i = 0; i < _clients.size(); i++)
+    for (size_t i = 0; i < _users.size(); i++)
     {
-        if (_clients[i] == client)
+        if (_users[i] == client)
         {
-            _clients.erase(_clients.begin() + i);
+            _users.erase(_users.begin() + i);
             break;
         }
     }
@@ -31,8 +31,25 @@ std::string Channel::getName() const
     return _name;
 }
 
-std::vector<Client *> Channel::getClients() const
+std::vector<Client *> Channel::getUsers() const
 {
-    return _clients;
+    return _users;
 }
 
+/**
+ * @brief Get the User Fd object
+ * 
+ * @param fd File descriptor
+ * @return std::vector<Client *> Users
+*/
+Client *Channel::getUserFd(int fd)
+{
+    for (size_t i = 0; i < _users.size(); i++)
+    {
+        if (_users[i]->getFd() == fd)
+        {
+            return _users[i];
+        }
+    }
+    return NULL;
+}
