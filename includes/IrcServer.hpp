@@ -20,15 +20,14 @@ class IrcServer
 {
 	private:
 		int _port;
-		std::string _pwd;
 		int _socket;
+		std::string _pwd;
 		struct sockaddr_in _server_addr;
 		std::vector<struct pollfd> _poll_fds;
 		std::vector<Channel *> _channels;
 		std::vector<Client *> _users;
 		Client *_user;
 	public:
-		IrcServer(Client* client);
 		IrcServer(const std::string args[]);
 		IrcServer &operator=(const IrcServer &rhs);
 		virtual ~IrcServer();
@@ -39,12 +38,12 @@ class IrcServer
 		void run();
 
 		//-----------------COMMANDS-----------------//
-		void nickCommand(int client_fd, std::string restOfCommand);
-		void joinCommand(int client_fd, std::string restOfCommand);
 		void leaveCommand(int client_fd);
-		void listCommand(int client_fd, std::string restOfCommand);
 		void usersCommand(int client_fd);
 		void exitCommand(int client_fd);
+		void nickCommand(int client_fd, std::string restOfCommand);
+		void joinCommand(int client_fd, std::string restOfCommand);
+		void listCommand(int client_fd, std::string restOfCommand);
 		void kickCommand(int client_fd, std::string restOfCommand);
 		void inviteCommand(int client_fd, std::string restOfCommand);
 		void topicCommand(int client_fd, std::string restOfCommand);
@@ -57,6 +56,8 @@ class IrcServer
 		struct pollfd &getPollFds(int i);
 		std::vector<Channel *> getChannels() const;
 		std::vector<Client *> getUsers() const;
+		Channel * getChannelByName(std::string name);
+		Client * getUserByNick(std::string nick);
 		Client * getUserFd(int fd);
 		void setPollFds(int i, int fd, short int revents); 
 };

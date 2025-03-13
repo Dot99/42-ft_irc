@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <cstring>
+#include <cstdlib>
 #include <ctime>
 #include <iostream>
 #include <unistd.h>
@@ -23,6 +24,7 @@
 #include <sstream>
 #include <vector>
 #include <signal.h>
+#include <functional>
 
 #include "Client.hpp"
 #include "Channel.hpp"

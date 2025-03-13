@@ -221,6 +221,11 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 			// 	break;
 			// }
 			channelExists = true;
+			if (_channels[i]->getInviteOnly() && !_user->getOperator() && !_channels[i]->getInvitedUser(client_fd))
+			{
+				send(client_fd, "Channel is invite only\n", 24, 0);
+				break;
+			}
 			for (size_t j = 0; j < _channels[i]->getUsers().size(); j++)
 			{
 				if (_channels[i]->getUsers()[j]->getNick() != _user->getNick())
@@ -243,8 +248,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 		_channels[_channels.size() - 1]->addUser(_user);
 		_user->setChannel(_channels[_channels.size() - 1]);
 		msg = "\nChannel " + _channels[_channels.size() - 1]->getName() + " created and user " + _user->getNick() + " added\n\n";
-		//Since the user is the first in the channel, it is the operator
-		//TODO: Set user as operator
+		_user->setOperator(true);
 		std::cout << msg;
 	}
 	if (_user->getChannel())
@@ -262,11 +266,6 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 */
 void IrcServer::leaveCommand(int client_fd)
 {
-	std::string inputChannel = readLine(client_fd, 200); //(200) Max Channel characters
-	if(inputChannel.empty())
-	{
-		send(client_fd, "Invalid channel\n", 16, 0);
-	}
 	if (_user->getChannel())
 	{
 		sendClientMsg(client_fd, "User left channel\n", 0);
@@ -307,6 +306,11 @@ void IrcServer::usersCommand(int client_fd)
 		if (_channels[i]->getUserFd(client_fd))
 			break;
 	}
+	if (i == _channels.size())
+	{
+		send(client_fd, "You are not in a channel\n", 25, 0);
+		return ;
+	}
 	msg = "Channel: " + _channels[i]->getName();
 	send(client_fd, msg.c_str(), msg.length(), 0);
 	for (size_t j = 0; j < _channels[i]->getUsers().size(); j++)
@@ -344,6 +348,7 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 			if (_user->getChannel()->getUsers()[i]->getNick() == inputNick)
 			{
 				_user->getChannel()->removeUser(_user->getChannel()->getUsers()[i]);
+				send(_user->getChannel()->getUsers()[i]->getFd(), "You have been kicked from your channel\n", 12, 0);
 				break;
 			}
 		}
@@ -354,6 +359,38 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 
 void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 {
+	std::istringstream iss(restOfCommand);
+	std::string nickname;
+	std::string channelName;
+	
+	iss >> nickname >> channelName;
+	if (nickname.empty() || channelName.empty())
+	{
+		send(client_fd, "Invalid INVITE command\n", 24, 0);
+		return;
+	}
+	if (_user->getChannel() == NULL)
+	{
+		send(client_fd, "You are not in a channel\n", 25, 0);
+		return ;
+	}
+	if (_user->getOperator() == false)
+	{
+		send(client_fd, "Not allowed", 11, 0);
+		return ;
+	}
+	if (!getChannelByName(channelName))
+	{
+		send(client_fd, "Channel not found\n", 18, 0);
+		return ;
+	}
+	if (getUserByNick(nickname))
+	{
+		send(client_fd, "User not found\n", 15, 0);
+		return ;
+	}
+	_user->getChannel()->addInvitedUser(getUserByNick(nickname));
+	send(client_fd, "User invited to channel\n", 24, 0);
 	//TODO: Check if channel is invite only
 	// If true
 	// 	Check if user is operator
@@ -391,27 +428,51 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 
 void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 {
+	std::string mode = "itkol";
 	if(_user->getOperator() == false)
 	{
 		send(client_fd, "Not allowed", 11, 0);
 		return ;
 	}
-	std::string inputMode = restOfCommand;
-	if(inputMode.empty())
+	if (!restOfCommand[0])
 	{
 		send(client_fd, "Invalid mode\n", 13, 0);
 	}
+	char inputMode = restOfCommand[0];
+	std::string parameter = restOfCommand.substr(1);
+	if(parameter.empty())
+	{
+		send(client_fd, "Invalid parameter\n", 18, 0);
+	}
 	else
 	{
-		if(inputMode == "i")
+		int i = 0;
+		for(; i < 5; i++)
 		{
-			//TODO: Change mode of the channel to invite only
+			if(inputMode == mode[i])
+				break;
 		}
-		else if (inputMode == "t")
+		switch (i)
 		{
-			//TODO: Change restrictions of the TOPIC command
+		case 0: //i (Set/remove Invite-only channel)
+			_user->getChannel()->setInviteOnly(true);
+			break;
+		case 1: //t (Set/remove the restrictions of the TOPIC command to channel operators)
+			//TODO:handle "t"
+			break;
+		case 2: //k (Set/remove the channel key)
+			_user->getChannel()->setPassword(parameter);
+			break;
+		case 3: //o (Give/take channel operator privileges)
+			getUserByNick(parameter)->setOperator(true);
+			break;
+		case 4: //l (Set the user limit to channel)
+			_user->getChannel()->setLimit(std::atoi(parameter.c_str()));
+			break;
+		default:
+			send(client_fd, "Invalid mode\n", 13, 0);
+			break;
 		}
-		//TODO: else if inputMode "k" change channel password with the rest of the command
 	}
 	//TODO: Change mode of the channel
 }
@@ -522,6 +583,42 @@ std::vector<Channel *> IrcServer::getChannels() const
 std::vector<Client *> IrcServer::getUsers() const
 {
 	return (_users);
+}
+
+/**
+ * @brief Get the Channel By Name object
+ * 
+ * @param name Channel name
+ * @return Channel* Channel
+*/
+Channel *IrcServer::getChannelByName(std::string name)
+{
+	for (size_t i = 0; i < _channels.size(); i++)
+	{
+		if (_channels[i]->getName() == name)
+		{
+			return _channels[i];
+		}
+	}
+	return NULL;
+}
+
+/**
+ * @brief Get the User By Nick object
+ * 
+ * @param nick Nickname
+ * @return Client* User
+*/
+Client *IrcServer::getUserByNick(std::string nick)
+{
+	for (size_t i = 0; i < _users.size(); i++)
+	{
+		if (_users[i]->getNick() == nick)
+		{
+			return _users[i];
+		}
+	}
+	return NULL;
 }
 
 /**
