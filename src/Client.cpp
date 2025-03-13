@@ -46,20 +46,6 @@ void Client::removeClient(int client_fd)
 	// _client.erase(client_fd);
 }
 
-/**
- * @brief Adds a user to the map
- * 
- * @param nick Nickname
- * @param pass Password
-*/
-void Client::addUserData(std::string nick, std::string pass)
-{
-	if (!_user[nick].empty())
-	{
-		_user[nick] = pass;
-	}
-}
-
 
 void Client::validateUser(int client_fd)
 {
@@ -111,12 +97,23 @@ void Client::validateUser(int client_fd)
 		std::string listOfComands = "\n\nList of comands:\n/nick /join /leave /list /users /exit /kick /invite /topic /mode\n\n";
 		send(client_fd, listOfComands.c_str(), listOfComands.length(), 0);
 	}
-	if (_server.getChannels()[1])
+}
+
+/**
+ * @brief Handles a channel message
+ * 
+ * @param client_fd Client file descriptor
+ * @param buffer Buffer
+*/
+void Client::hanleChannelMessage(int client_fd, char *buffer)
+{
+	std::string msg = getNick() + ": " + buffer;
+	if (_channel)
 	{
-		std::cout << "users in channels: " << _server.getChannels()[1]->getUsers().size() << std::endl;
-		if (_server.getChannels()[1]->getUsers()[0])
+		for (size_t i = 0; i < _channel->getUsers().size(); i++)
 		{
-			std::cout << "users in channels: " << _server.getChannels()[1]->getUsers()[0]->getNick() << std::endl;
+			if (_channel->getUsers()[i]->getFd() != client_fd)
+				sendClientMsg(_channel->getUsers()[i]->getFd(), msg.c_str(), 0);
 		}
 	}
 }
@@ -127,7 +124,7 @@ void Client::validateUser(int client_fd)
  * @param client_fd Client file descriptor
  * @param commands Commands object
 */
-void Client::handleClientMessage(int client_fd, Commands &commands)
+void Client::handleClientMessage(int client_fd)
 {
     char buffer[1024];
     int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
@@ -140,7 +137,10 @@ void Client::handleClientMessage(int client_fd, Commands &commands)
         return;
     }
     buffer[bytes_received] = '\0';
-    commands.parseCommand(client_fd, buffer);
+	if (buffer[0] && buffer[0] == '/')
+    	_server.parseCommand(client_fd, buffer);
+	else
+		hanleChannelMessage(client_fd, buffer);
     // TODO: Parse and process IRC commands here
 	/*
 		Check if there is a command sent by client

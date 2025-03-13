@@ -20,8 +20,7 @@ int main(int argc, char **argv)
 	try
 	{
 		IrcServer server(args);
-		Commands commands(server);
-		server.run(commands);
+		server.run();
 	}
 	catch(const std::exception& e)
 	{

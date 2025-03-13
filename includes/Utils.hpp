@@ -25,7 +25,6 @@
 #include <signal.h>
 
 #include "Client.hpp"
-#include "Commands.hpp"
 #include "Channel.hpp"
 #include "IrcServer.hpp"
 

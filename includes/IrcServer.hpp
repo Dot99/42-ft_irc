@@ -14,7 +14,6 @@
 #include "Utils.hpp"
 
 class Client;
-class Commands;
 class Channel;
 
 class IrcServer
@@ -27,11 +26,32 @@ class IrcServer
 		std::vector<struct pollfd> _poll_fds;
 		std::vector<Channel *> _channels;
 		std::vector<Client *> _users;
+		Client *_user;
 	public:
 		IrcServer(Client* client);
 		IrcServer(const std::string args[]);
 		IrcServer &operator=(const IrcServer &rhs);
 		virtual ~IrcServer();
+
+		void addChannel(Channel *channel);
+		void addUser(Client *client);
+		void startServer();
+		void run();
+
+		//-----------------COMMANDS-----------------//
+		void nickCommand(int client_fd, std::string restOfCommand);
+		void joinCommand(int client_fd, std::string restOfCommand);
+		void leaveCommand(int client_fd);
+		void listCommand(int client_fd, std::string restOfCommand);
+		void usersCommand(int client_fd);
+		void exitCommand(int client_fd);
+		void kickCommand(int client_fd, std::string restOfCommand);
+		void inviteCommand(int client_fd, std::string restOfCommand);
+		void topicCommand(int client_fd, std::string restOfCommand);
+		void modeCommand(int client_fd, std::string restOfCommand);
+		void parseCommand(int client_fd, std::string command);
+
+		//-----------------GETTERS/SETTERS-----------------//
 		int getSock() const;
 		std::string getPwd() const;
 		struct pollfd &getPollFds(int i);
@@ -39,8 +59,4 @@ class IrcServer
 		std::vector<Client *> getUsers() const;
 		Client * getUserFd(int fd);
 		void setPollFds(int i, int fd, short int revents); 
-		void addChannel(Channel *channel);
-		void addUser(Client *client);
-		void startServer();
-		void run(Commands &commands);
 };

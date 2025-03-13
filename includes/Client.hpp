@@ -15,7 +15,6 @@
 
 
 class IrcServer;
-class Commands;
 class Channel;
 
 class Client
@@ -29,10 +28,18 @@ class Client
 		bool _isAuthenticated;
 		bool _isOperator;
 		struct sockaddr_in _client_adrr;
-		std::map<std::string, std::string> _user;
 	public:
 		Client(IrcServer &server);
 		virtual ~Client();
+
+		void validateUser(int client_fd);
+		int acceptClient(int client_fd);
+		void hanleChannelMessage(int client_fd, char *buffer);
+		void handleClientMessage(int client_fd);
+		void removeClient(int client_fd);
+		int checkPwd(int client_fd);
+
+		//-----------------GETTERS/SETTERS-----------------//
 		void setAuthenticated(bool auth);
 		void setOperator(bool op);
 		void setUser(std::string nick, std::string pass);
@@ -44,11 +51,4 @@ class Client
 		void setFd(int fd);
 		void setChannel(Channel *channel);
 		Channel *getChannel();
-		void validateUser(int client_fd);
-		void addUserData(std::string nick, std::string pass);
-		void removeUserData(std::string nick);
-		int acceptClient(int client_fd);
-		void handleClientMessage(int client_fd, Commands &commands);
-		void removeClient(int client_fd);
-		int checkPwd(int client_fd);
 };
