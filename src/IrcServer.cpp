@@ -206,9 +206,6 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 	
 	iss >> channelName >> passwd;
 	channelName = clean_input(channelName, SPACES);
-	std::cout << "restOfCommand[" << restOfCommand << "]" << std::endl;
-	std::cout << "Channel[" << channelName << "]" << std::endl;
-	std::cout << "Passwd[" << passwd << "]" << std::endl;
 	bool channelExists = false;
 	std::string msg;
 	if(channelName.empty())
@@ -393,9 +390,9 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 		send(client_fd, "Invalid INVITE command\n", 24, 0);
 		return;
 	}
-	if (_user->getChannel() == NULL)
+	if (_user->getChannel()->getName() != channelName)
 	{
-		send(client_fd, "You are not in a channel\n", 25, 0);
+		send(client_fd, "You are not in the channel\n", 25, 0);
 		return ;
 	}
 	if (_user->getOperator() == false)
@@ -415,15 +412,6 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 	}
 	_user->getChannel()->addInvitedUser(getUserByNick(nickname));
 	send(client_fd, "User invited to channel\n", 24, 0);
-	//TODO: Check if channel is invite only
-	// If true
-	// 	Check if user is operator
-	// 	If true
-	// 		Invite user to channel
-	// 	Else
-	// 		Send error message
-	// Else
-	// 	Invite user to channel
 	std::string inputNick = restOfCommand;
 	if(inputNick.empty())
 	{
@@ -460,43 +448,37 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 		return ;
 	}
 	if (!restOfCommand[0])
-	{
 		send(client_fd, "Invalid mode\n", 13, 0);
-	}
 	char inputMode = restOfCommand[0];
 	std::string parameter = restOfCommand.substr(1);
 	if (parameter.empty() && inputMode != 'i' && inputMode != 't')
-	{
 		send(client_fd, "Invalid parameter\n", 18, 0);
-	}
 	else
 	{
 		int i = 0;
 		for(; i < 5; i++)
-		{
-			if(inputMode == mode[i])
+			if (inputMode == mode[i])
 				break;
-		}
 		switch (i)
 		{
-		case 0: //i (Set/remove Invite-only channel)
-			_user->getChannel()->setInviteOnly(true);
-			break;
-		case 1: //t (Set/remove the restrictions of the TOPIC command to channel operators)
-			//TODO:handle "t"
-			break;
-		case 2: //k (Set/remove the channel key)
-			_user->getChannel()->setPassword(parameter);
-			break;
-		case 3: //o (Give/take channel operator privileges)
-			getUserByNick(parameter)->setOperator(true);
-			break;
-		case 4: //l (Set the user limit to channel)
-			_user->getChannel()->setLimit(std::atoi(parameter.c_str()));
-			break;
-		default:
-			send(client_fd, "Invalid mode\n", 13, 0);
-			break;
+			case 0: //i (Set/remove Invite-only channel)
+				_user->getChannel()->setInviteOnly(true);
+				break;
+			case 1: //t (Set/remove the restrictions of the TOPIC command to channel operators)
+				//TODO:handle "t"
+				break;
+			case 2: //k (Set/remove the channel key)
+				_user->getChannel()->setPassword(parameter);
+				break;
+			case 3: //o (Give/take channel operator privileges)
+				getUserByNick(parameter)->setOperator(true);
+				break;
+			case 4: //l (Set the user limit to channel)
+				_user->getChannel()->setLimit(std::atoi(parameter.c_str()));
+				break;
+			default:
+				send(client_fd, "Invalid mode\n", 13, 0);
+				break;
 		}
 	}
 	//TODO: PRINT MESSAGES AFTER SETING MODE

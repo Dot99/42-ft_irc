@@ -14,6 +14,7 @@
 
 int main(int argc, char **argv)
 {
+	//TODO:MEMORY LEAKS AND USERNAME
 	std::string args[argc];
 	if (checkArgs(argc, argv, args))
 		return(1);
