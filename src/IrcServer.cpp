@@ -119,6 +119,7 @@ void IrcServer::startServer()
 	}
 	std::cout << "Server started on port: " << _port << std::endl;
 	Channel *channel = new Channel("general");
+	//TODO: handle alloc error
 	addChannel(channel);
 }
 
@@ -145,6 +146,7 @@ void IrcServer::run()
                 if (_poll_fds[i].fd == _socket)
 				{
 					Client *newClient = new Client(*this);
+					//TODO: handle alloc error
 					addUser(newClient);
 					client_fd = _users.back()->acceptClient(_poll_fds[i].fd);
 					if (client_fd < 0)
@@ -179,6 +181,7 @@ void IrcServer::run()
 void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 {
 	std::string inputNick = restOfCommand;
+	inputNick = clean_input(inputNick, SPACES);
 	std::string msg;
 	if(inputNick.empty())
 	{
@@ -197,39 +200,55 @@ void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 */
 void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 {
-	std::string inputChannel = restOfCommand;
+	std::istringstream iss(restOfCommand);
+	std::string channelName;
+	std::string passwd;
+	
+	iss >> channelName >> passwd;
+	channelName = clean_input(channelName, SPACES);
+	std::cout << "restOfCommand[" << restOfCommand << "]" << std::endl;
+	std::cout << "Channel[" << channelName << "]" << std::endl;
+	std::cout << "Passwd[" << passwd << "]" << std::endl;
 	bool channelExists = false;
 	std::string msg;
-	if(inputChannel.empty())
+	if(channelName.empty())
 	{
 		send(client_fd, "Invalid channel\n", 16, 0);
 		return ;
 	}
 	for (size_t i = 0; i < _channels.size(); i++)
 	{
-		if ((_channels[i]->getName() == inputChannel) && _user->getChannel() == NULL)
+		if ((_channels[i]->getName() == channelName) && _user->getChannel() == NULL)
 		{
-			// if (getChannels()[i]->getPassword().empty())
-			// {
-			// 	getChannels()[i]->addUser(&_client);
-			// 	channelExists = true;
-			// 	break;
-			// }
-			// else
-			// {
-			// 	send(client_fd, "Channel has password\n", 21, 0);
-			// 	break;
-			// }
 			channelExists = true;
 			if (_channels[i]->getInviteOnly() && !_user->getOperator() && !_channels[i]->getInvitedUser(client_fd))
 			{
 				send(client_fd, "Channel is invite only\n", 24, 0);
 				break;
 			}
+			if (_channels[i]->getLimit() && _channels[i]->getUsers().size() >= _channels[i]->getLimit())
+			{
+				send(client_fd, "Channel is full\n", 16, 0);
+				break;
+			}
 			for (size_t j = 0; j < _channels[i]->getUsers().size(); j++)
 			{
 				if (_channels[i]->getUsers()[j]->getNick() != _user->getNick())
 				{
+					if (_channels[i]->getPassword().empty())
+					{
+						_channels[i]->addUser(_user);
+						_user->setChannel(_channels[i]);
+						msg = "User " + _user->getNick() + " added to channel: " + _channels[i]->getName() + "\n";
+						send(client_fd, msg.c_str(), msg.length(), 0);
+						std::cout << msg;
+						break;
+					}
+					else if (_channels[i]->getPassword() != passwd)
+					{
+						send(client_fd, "Channel has password\n", 21, 0);
+						break;
+					}
 					_channels[i]->addUser(_user);
 					_user->setChannel(_channels[i]);
 					msg = "User " + _user->getNick() + " added to channel: " + _channels[i]->getName() + "\n";
@@ -243,7 +262,8 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 	}
 	if (!channelExists)
 	{
-		Channel *channel = new Channel(inputChannel);
+		Channel *channel = new Channel(channelName);
+		//TODO:handle alloc error
 		addChannel(channel);
 		_channels[_channels.size() - 1]->addUser(_user);
 		_user->setChannel(_channels[_channels.size() - 1]);
@@ -306,7 +326,7 @@ void IrcServer::usersCommand(int client_fd)
 		if (_channels[i]->getUserFd(client_fd))
 			break;
 	}
-	if (i == _channels.size())
+	if (i == _channels.size() || !_user->getChannel())
 	{
 		send(client_fd, "You are not in a channel\n", 25, 0);
 		return ;
@@ -331,6 +351,7 @@ void IrcServer::exitCommand(int client_fd)
 
 void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 {
+	restOfCommand = clean_input(restOfCommand, SPACES);
 	if(_user->getOperator() == false)
 	{
 		send(client_fd, "Not allowed", 11, 0);
@@ -347,8 +368,11 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 		{
 			if (_user->getChannel()->getUsers()[i]->getNick() == inputNick)
 			{
+				_user->getChannel()->getUsers()[i]->setOperator(false);
+				_user->getChannel()->getUsers()[i]->setChannel(NULL);
+				_user->getChannel()->removeInvitedUser(_user->getChannel()->getUsers()[i]);
+				send(_user->getChannel()->getUsers()[i]->getFd(), "You have been kicked from your channel\n", 39, 0);
 				_user->getChannel()->removeUser(_user->getChannel()->getUsers()[i]);
-				send(_user->getChannel()->getUsers()[i]->getFd(), "You have been kicked from your channel\n", 12, 0);
 				break;
 			}
 		}
@@ -384,7 +408,7 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 		send(client_fd, "Channel not found\n", 18, 0);
 		return ;
 	}
-	if (getUserByNick(nickname))
+	if (!getUserByNick(nickname))
 	{
 		send(client_fd, "User not found\n", 15, 0);
 		return ;
@@ -405,7 +429,7 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 	{
 		send(client_fd, "Invalid nickname\n", 17, 0);
 	}
-	//TODO: Invite user to channel
+	//TODO: SEND MESSAGE TO THE INVITED USER
 }
 
 void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
@@ -429,6 +453,7 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 {
 	std::string mode = "itkol";
+	restOfCommand = clean_input(restOfCommand, SPACES);
 	if(_user->getOperator() == false)
 	{
 		send(client_fd, "Not allowed", 11, 0);
@@ -440,7 +465,7 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 	}
 	char inputMode = restOfCommand[0];
 	std::string parameter = restOfCommand.substr(1);
-	if(parameter.empty())
+	if (parameter.empty() && inputMode != 'i' && inputMode != 't')
 	{
 		send(client_fd, "Invalid parameter\n", 18, 0);
 	}
@@ -474,6 +499,7 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 			break;
 		}
 	}
+	//TODO: PRINT MESSAGES AFTER SETING MODE
 	//TODO: Change mode of the channel
 }
 
@@ -491,7 +517,7 @@ void IrcServer::parseCommand(int client_fd, std::string command)
         {
             foundCommand = commands[i];
             restOfCommand = command.substr(pos + commands[i].length());
-			restOfCommand = clean_input(restOfCommand);
+			restOfCommand = clean_input(restOfCommand, ENTER);
             break;
         }
     }
@@ -595,6 +621,8 @@ Channel *IrcServer::getChannelByName(std::string name)
 {
 	for (size_t i = 0; i < _channels.size(); i++)
 	{
+		std::cout << "channel name[" << _channels[i]->getName() << "]" << std::endl;
+		std::cout << "name[" << name << "]" << std::endl;
 		if (_channels[i]->getName() == name)
 		{
 			return _channels[i];

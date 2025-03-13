@@ -30,8 +30,10 @@
 #include "Channel.hpp"
 #include "IrcServer.hpp"
 
+#define SPACES 1
+#define ENTER 2
 
 bool checkArgs(int argc, char **argv, std::string args[]);
 std::string readLine(int client_fd, unsigned long max_length);
 void sendClientMsg(int client_fd, const char *msg, int flags);
-std::string clean_input(std::string input);
+std::string clean_input(std::string input, int what );

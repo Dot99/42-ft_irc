@@ -24,6 +24,18 @@ void Channel::addInvitedUser(Client *client)
 	_invitedUsers.push_back(client);
 }
 
+void Channel::removeInvitedUser(Client *client)
+{
+	for (size_t i = 0; i < _invitedUsers.size(); i++)
+	{
+		if (_invitedUsers[i] == client)
+		{
+			_invitedUsers.erase(_invitedUsers.begin() + i);
+			break;
+		}
+	}
+}
+
 void Channel::removeOperator(Client *client)
 {
 	for (size_t i = 0; i < _operators.size(); i++)
@@ -85,7 +97,7 @@ Client *Channel::getInvitedUser(int fd)
 	return NULL;
 }
 
-int Channel::getLimit() const
+size_t Channel::getLimit() const
 {
 	return _limit;
 }

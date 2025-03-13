@@ -107,6 +107,7 @@ void Client::validateUser(int client_fd)
 */
 void Client::hanleChannelMessage(int client_fd, char *buffer)
 {
+	//TODO:CHANGE FUNCTION NAME AND DONT SEND ENTER TO CHANNEL
 	std::string msg = getNick() + ": " + buffer;
 	if (_channel)
 	{

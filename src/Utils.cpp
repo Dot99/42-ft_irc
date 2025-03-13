@@ -125,13 +125,17 @@ void sendClientMsg(int client_fd, const char *msg, int flags) {
 	}
 }
 
-std::string clean_input(std::string input)
+std::string clean_input(std::string input, int what )
 {
 	std::string result;
     for (std::string::iterator it = input.begin(); it != input.end(); ++it)
 	{
-        if (*it != '\n' && *it != '\r' && *it != ' ')
-            result += *it;
+		if (what == SPACES)
+			if (*it != ' ')
+				result += *it;
+		if (what == ENTER)
+       		if (*it != '\n' && *it != '\r')
+				result += *it;
     }
 	return result;
 }
