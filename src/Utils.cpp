@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/11 12:46:40 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/13 16:27:47 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,40 +85,40 @@ bool checkArgs(int argc, char **argv, std::string args[])
  * @param max_length Maximum length of the input
  */
 std::string readLine(int client_fd, unsigned long max_length) {
-    std::string input;
-    char c;
-    int bytes_received;
-    bool too_long = false;
+	std::string input;
+	char c;
+	int bytes_received;
+	bool too_long = false;
 
-    while ((bytes_received = recv(client_fd, &c, 1, 0)) > 0) {
-        if (c == '\n' || c == '\r')  // End of input
-            break;
-        if (!too_long) {
-            if (input.size() < max_length) {
-                input += c;
-            } else {
-                too_long = true;  // Mark that we are exceeding the limit
-            }
-        }
-    }
+	while ((bytes_received = recv(client_fd, &c, 1, 0)) > 0) {
+		if (c == '\n' || c == '\r')  // End of input
+			break;
+		if (!too_long) {
+			if (input.size() < max_length) {
+				input += c;
+			} else {
+				too_long = true;  // Mark that we are exceeding the limit
+			}
+		}
+	}
 
-    // Discard any remaining input if it was too long
-    if (too_long) {
-        char discard_buffer[256];
-        while (recv(client_fd, discard_buffer, sizeof(discard_buffer), MSG_DONTWAIT) > 0);
-        return "";  // Return empty string to indicate an error
-    }
+	// Discard any remaining input if it was too long
+	if (too_long) {
+		char discard_buffer[256];
+		while (recv(client_fd, discard_buffer, sizeof(discard_buffer), MSG_DONTWAIT) > 0);
+		return "";  // Return empty string to indicate an error
+	}
 
-    return input;
+	return input;
 }
 
 void sendClientMsg(int client_fd, const char *msg, int flags) {
-    std::time_t now = std::time(NULL);
-    std::tm* localTime = std::localtime(&now);
-    int hour = localTime->tm_hour;
+	std::time_t now = std::time(NULL);
+	std::tm* localTime = std::localtime(&now);
+	int hour = localTime->tm_hour;
 	int min = localTime->tm_min;
 	std::stringstream ss;
-    ss << "[" << hour << ":" << min << "] " << msg;
+	ss << "[" << hour << ":" << min << "] " << msg;
 	std::string full_msg = ss.str();
 	if (send(client_fd, full_msg.c_str(), full_msg.length(), flags) == -1) {
 		std::cerr << "Error: send() failed" << std::endl;
@@ -128,14 +128,49 @@ void sendClientMsg(int client_fd, const char *msg, int flags) {
 std::string clean_input(std::string input, int what )
 {
 	std::string result;
-    for (std::string::iterator it = input.begin(); it != input.end(); ++it)
+	for (std::string::iterator it = input.begin(); it != input.end(); ++it)
 	{
 		if (what == SPACES)
 			if (*it != ' ')
 				result += *it;
 		if (what == ENTER)
-       		if (*it != '\n' && *it != '\r')
+	   		if (*it != '\n' && *it != '\r')
 				result += *it;
-    }
+	}
 	return result;
+}
+
+bool wildcardMatch(const std::string &str, const std::string &pattern)
+{
+	size_t strIndex = 0, patternIndex = 0, matchIndex = 0;
+	size_t starIndex = std::string::npos;
+	while (strIndex < str.size())
+	{
+		if (patternIndex < pattern.size() && (pattern[patternIndex] == '?' || pattern[patternIndex] == str[strIndex]))
+		{
+			strIndex++;
+			patternIndex++;
+		}
+		else if (patternIndex < pattern.size() && pattern[patternIndex] == '*')
+		{
+			starIndex = patternIndex;
+			matchIndex = strIndex;
+			patternIndex++;
+		}
+		else if (starIndex != std::string::npos)
+		{
+			patternIndex = starIndex + 1;
+			matchIndex++;
+			strIndex = matchIndex;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	while (patternIndex < pattern.size() && pattern[patternIndex] == '*')
+	{
+		patternIndex++;
+	}
+	return patternIndex == pattern.size();
 }

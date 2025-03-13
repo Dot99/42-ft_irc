@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:25:36 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/13 08:55:29 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/13 16:08:31 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ class Client
 
 		void validateUser(int client_fd);
 		int acceptClient(int client_fd);
-		void hanleChannelMessage(int client_fd, char *buffer);
+		void handleChannelMessage(int client_fd, char *buffer);
 		void handleClientMessage(int client_fd);
 		void removeClient(int client_fd);
 		int checkPwd(int client_fd);

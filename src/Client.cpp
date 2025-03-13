@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/13 08:55:39 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/13 17:14:05 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,53 +49,60 @@ void Client::removeClient(int client_fd)
 
 void Client::validateUser(int client_fd)
 {
-	std::string inputNick = readLine(client_fd, 9); //(9) Max Nickname characters
-	if(inputNick.empty())
+	std::string inputNick;
+	while (true)
 	{
-		//TODO: Send user to nick again due to error
-		send(client_fd, "Invalid nickname\n", 17, 0);
-		close(client_fd);
-		//return (-1);
-	}
-	if (inputNick == getNick())
-	{
-		send(client_fd, "PASS:\n", 5, 0);
-		std::string inputPwd = readLine(client_fd, 510); //(510) Max pwd characters
-		if(inputPwd.empty())
+		inputNick = readLine(client_fd, 9); //(9) Max Nickname characters
+		if (inputNick.empty())
 		{
-			//TODO: Send user to nick again due to error
-			send(client_fd, "Invalid password\n", 17, 0);
-			close(client_fd);
-			//return (-1);
+			send(client_fd, "Invalid nickname\n", 17, 0);
+			continue; // Ask for nickname again
 		}
-		if(inputPwd == getPass())
+		if (inputNick == getNick())
 		{
-			setUser(inputNick, inputPwd);
-			setAuthenticated(true);
-			send(client_fd, "Welcome to IRC server\n\n", 23, 0);
+			break; // Valid nickname
 		}
 		else
 		{
-			send(client_fd, "Invalid password\n", 17, 0);
-			close(client_fd);
+			if(inputNick == getNick())
+			{
+				send(client_fd, "Nickname already in use\n", 24, 0);
+			}
+			else
+			{
+				setUser(inputNick, "");
+				break;
+			}
 		}
+	}
+
+	send(client_fd, "PASS:\n", 5, 0);
+	std::string inputPwd = readLine(client_fd, 510); //(510) Max pwd characters
+	if (inputPwd.empty())
+	{
+		send(client_fd, "Invalid password\n", 17, 0);
+		close(client_fd);
+		return;
+	}
+	std::cout << inputPwd << std::endl;
+	std::cout << getPass() << std::endl;
+	if (inputPwd == getPass())
+	{
+		setUser(inputNick, inputPwd);
+		setAuthenticated(true);
+		send(client_fd, "Welcome to IRC server\n\n", 23, 0);
+	}
+	//TODO: Check if getPass() is empty due to \n
+	else if (getPass().empty())
+	{
+		setUser(inputNick, inputPwd);
+		setAuthenticated(true);
+		send(client_fd, "Welcome to IRC server\n\n", 23, 0);
 	}
 	else
 	{
-		setUser(inputNick, "");
-		send(client_fd, "PASS:\n", 5, 0);
-		std::string inputPwd = readLine(client_fd, 510); //(510) Max pwd characters
-		if(inputPwd.empty())
-		{
-			//TODO: Send user to nick again due to error
-			send(client_fd, "Invalid password\n", 17, 0);
-			close(client_fd);
-			//return (-1);
-		}
-		setUser(inputNick, inputPwd);
-		// setAuthenticated(true);
-		std::string listOfComands = "\n\nList of comands:\n/nick /join /leave /list /users /exit /kick /invite /topic /mode\n\n";
-		send(client_fd, listOfComands.c_str(), listOfComands.length(), 0);
+		send(client_fd, "Invalid password\n", 17, 0);
+		close(client_fd);
 	}
 }
 
@@ -105,9 +112,10 @@ void Client::validateUser(int client_fd)
  * @param client_fd Client file descriptor
  * @param buffer Buffer
 */
-void Client::hanleChannelMessage(int client_fd, char *buffer)
+void Client::handleChannelMessage(int client_fd, char *buffer)
 {
-	//TODO:CHANGE FUNCTION NAME AND DONT SEND ENTER TO CHANNEL
+	if (buffer[0] == '\n')
+		return;
 	std::string msg = getNick() + ": " + buffer;
 	if (_channel)
 	{
@@ -127,22 +135,24 @@ void Client::hanleChannelMessage(int client_fd, char *buffer)
 */
 void Client::handleClientMessage(int client_fd)
 {
-    char buffer[1024];
-    int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-    if (bytes_received < 0) // Client disconnected
-    {
-        std::cout << "Client " << client_fd << " disconnected." << std::endl;
-        close(client_fd);
-        removeClient(client_fd);
+	char buffer[1024];
+	int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+	if (bytes_received < 0) // Client disconnected
+	{
+		std::cout << "Client " << client_fd << " disconnected." << std::endl;
+		close(client_fd);
+		removeClient(client_fd);
 		close(_server.getSock());
-        return;
-    }
-    buffer[bytes_received] = '\0';
+		return;
+	}
+	buffer[bytes_received] = '\0';
 	if (buffer[0] && buffer[0] == '/')
-    	_server.parseCommand(client_fd, buffer);
+		_server.parseCommand(client_fd, buffer);
 	else
-		hanleChannelMessage(client_fd, buffer);
-    // TODO: Parse and process IRC commands here
+	{
+		handleChannelMessage(client_fd, buffer);
+	}
+	// TODO: Parse and process IRC commands here
 	/*
 		Check if there is a command sent by client
 		if command is NICK
@@ -231,7 +241,7 @@ void Client::setUser(std::string nick, std::string pass)
 */
 std::string Client::getNick()
 {
-    return _nick;
+	return _nick;
 }
 
 /**

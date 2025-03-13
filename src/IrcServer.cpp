@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/11 12:46:21 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/13 17:01:11 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,16 +134,16 @@ void IrcServer::run()
 	while (1)
 	{
 		int event_count = poll(_poll_fds.data(), _poll_fds.size(), -1);
-        if (event_count == -1)
-        {
+		if (event_count == -1)
+		{
 			std::cerr << "Error: poll() failed" << std::endl;
-            break;
-        }
-        for (size_t i = 0; i < _poll_fds.size(); i++)
-        {
+			break;
+		}
+		for (size_t i = 0; i < _poll_fds.size(); i++)
+		{
 			if (_poll_fds[i].revents & POLLIN) 
-            {
-                if (_poll_fds[i].fd == _socket)
+			{
+				if (_poll_fds[i].fd == _socket)
 				{
 					Client *newClient = new Client(*this);
 					//TODO: handle alloc error
@@ -163,11 +163,11 @@ void IrcServer::run()
 					send(client_fd, "NICK:\n", 5, 0);
 					_users.back()->validateUser(client_fd);
 				}
-                else
+				else
 				{
 					getUserFd(_poll_fds[i].fd)->handleClientMessage(_poll_fds[i].fd);
 				}
-            }	
+			}	
 		}
 	}
 }
@@ -310,7 +310,16 @@ void IrcServer::listCommand(int client_fd, std::string restOfCommand)
 	}
 	else
 	{
-		//TODO: List all channels with the full/part name of the channel (Deal with wildcards?)
+		std::string pattern = clean_input(restOfCommand, SPACES);
+		for (size_t i = 0; i < _channels.size(); i++)
+		{
+			if (wildcardMatch(_channels[i]->getName(), pattern))
+			{
+				send(client_fd, "Channel: ", 9, 0);
+				send(client_fd, _channels[i]->getName().c_str(), _channels[i]->getName().length(), 0);
+				send(client_fd, "\n", 1, 0);
+			}
+		}
 	}
 }
 
@@ -489,20 +498,20 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 {
 	std::string commands[10] = {"/nick", "/join", "/leave", "/list", "/users", "/exit", "/kick",  "/invite", "/topic", "/mode"};
 	int i = 0;
-    std::string foundCommand;
-    std::string restOfCommand;
+	std::string foundCommand;
+	std::string restOfCommand;
 	_user = getUserFd(client_fd);
-    for(; i < 10; i++)
-    {
-        size_t pos = command.find(commands[i]);
-        if(pos != std::string::npos)
-        {
-            foundCommand = commands[i];
-            restOfCommand = command.substr(pos + commands[i].length());
+	for(; i < 10; i++)
+	{
+		size_t pos = command.find(commands[i]);
+		if(pos != std::string::npos)
+		{
+			foundCommand = commands[i];
+			restOfCommand = command.substr(pos + commands[i].length());
 			restOfCommand = clean_input(restOfCommand, ENTER);
-            break;
-        }
-    }
+			break;
+		}
+	}
 	switch(i)
 	{
 		case 0:
@@ -639,14 +648,14 @@ Client *IrcServer::getUserByNick(std::string nick)
 */
 Client *IrcServer::getUserFd(int fd)
 {
-    for (size_t i = 0; i < _users.size(); i++)
-    {
-        if (_users[i]->getFd() == fd)
-        {
-            return _users[i];
-        }
-    }
-    return NULL;
+	for (size_t i = 0; i < _users.size(); i++)
+	{
+		if (_users[i]->getFd() == fd)
+		{
+			return _users[i];
+		}
+	}
+	return NULL;
 }
 
 /**
