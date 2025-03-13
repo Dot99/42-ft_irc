@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/12 09:32:10 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/13 08:55:39 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -302,4 +302,25 @@ void Client::setAuthenticated(bool auth)
 bool Client::getAuthenticated()
 {
 	return (_isAuthenticated);
+}
+
+/**
+ * @brief Set the Operator object
+ * 
+ * @param op If the client is an operator
+*/
+void Client::setOperator(bool op)
+{
+	_isOperator = op;
+}
+
+/**
+ * @brief Check if the client is an operator
+ * 
+ * @return true If the client is an operator
+ * @return false If the client is not an operator
+*/
+bool Client::getOperator()
+{
+	return (_isOperator);
 }

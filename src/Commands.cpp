@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 12:19:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/12 11:57:25 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/13 09:26:05 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ void Commands::nickCommand(int client_fd, std::string restOfCommand)
 	{
 		send(client_fd, "Invalid nickname\n", 17, 0);
 	}
+	//TODO: Check if nickname is already in use and it's uppercase and lowercase letters. Ex: DOT it's the same nick as dot
 	_server.getUserFd(client_fd)->setUser(inputNick, _server.getUserFd(client_fd)->getPass());
 	msg = "User " + inputNick + " changed nickname\n";
 	send(client_fd, msg.c_str(), msg.length(), 0);
@@ -53,7 +54,7 @@ void Commands::joinCommand(int client_fd, std::string restOfCommand)
 	}
 	for (size_t i = 0; i < _server.getChannels().size(); i++)
 	{
-		if (_server.getChannels()[i]->getName() == inputChannel)
+		if ((_server.getChannels()[i]->getName() == inputChannel) && _user->getChannel() == NULL)
 		{
 			// if (_server.getChannels()[i]->getPassword().empty())
 			// {
@@ -89,6 +90,8 @@ void Commands::joinCommand(int client_fd, std::string restOfCommand)
 		_server.getChannels()[_server.getChannels().size() - 1]->addUser(_user);
 		_user->setChannel(_server.getChannels()[_server.getChannels().size() - 1]);
 		msg = "Channel " + _server.getChannels()[_server.getChannels().size() - 1]->getName() + " created and user " + _user->getNick() + " added\n";
+		//Since the user is the first in the channel, it is the operator
+		//TODO: Set user as operator
 		send(client_fd, msg.c_str(), msg.length(), 0);
 		std::cout << msg;
 	}
@@ -101,7 +104,6 @@ void Commands::joinCommand(int client_fd, std::string restOfCommand)
 */
 void Commands::leaveCommand(int client_fd)
 {
-	//TODO: Leave command have a message to send to the channel
 	std::string inputChannel = readLine(client_fd, 200); //(200) Max Channel characters
 	if(inputChannel.empty())
 	{
@@ -109,16 +111,12 @@ void Commands::leaveCommand(int client_fd)
 	}
 	if (_user->getChannel())
 	{
+		sendClientMsg(client_fd, "User left channel\n", 0);
 		_user->getChannel()->removeUser(_user);
 		_user->setChannel(NULL);
 	}
 	else
-		send(client_fd, "User is not in a channel\n", 25, 0);
-	//TODO: Check if user is in channel
-	// If true
-	// Leave channel
-	// Else
-	// Send error message
+		send(client_fd, "You are not in a channel\n", 25, 0);
 }
 
 /**
@@ -138,7 +136,7 @@ void Commands::listCommand(int client_fd, std::string restOfCommand)
 	}
 	else
 	{
-		//TODO: List all channels with the full/part name of the channel
+		//TODO: List all channels with the full/part name of the channel (Deal with wildcards?)
 	}
 }
 
@@ -156,31 +154,55 @@ void Commands::usersCommand(int client_fd)
 		msg = "Channel: " + _server.getChannels()[i]->getName() + "\nUser: " + _server.getChannels()[i]->getUsers()[j]->getNick() + "\n";
 		send(client_fd, msg.c_str(), msg.length(), 0);
 	}
-	//TODO: List all users in the channel
+	//TODO: Pretty print of the users in the channel
 }
 
 void Commands::exitCommand(int client_fd)
 {
 	(void)client_fd;
-	//TODO: Leave channel and close connection
+	_user->getChannel()->removeUser(_user);
+	_user->setChannel(NULL);
+	//TODO: Close connection with the client
 }
 
 void Commands::kickCommand(int client_fd, std::string restOfCommand)
 {
+	if(_user->getOperator() == false)
+	{
+		send(client_fd, "Not allowed", 11, 0);
+		return ;
+	}
 	std::string inputNick = restOfCommand;
 	if(inputNick.empty())
 	{
 		send(client_fd, "Invalid nickname\n", 17, 0);
 	}
-	//TODO: Check if user is in channel
-	// If true
-	// Kick user
-	// Else
-	// Send error message
+	if(_user->getChannel())
+	{
+		for (size_t i = 0; i < _user->getChannel()->getUsers().size(); i++)
+		{
+			if (_user->getChannel()->getUsers()[i]->getNick() == inputNick)
+			{
+				_user->getChannel()->removeUser(_user->getChannel()->getUsers()[i]);
+				break;
+			}
+		}
+	}
+	else
+		send(client_fd, "No user found\n", 14, 0);
 }
 
 void Commands::inviteCommand(int client_fd, std::string restOfCommand)
 {
+	//TODO: Check if channel is invite only
+	// If true
+	// 	Check if user is operator
+	// 	If true
+	// 		Invite user to channel
+	// 	Else
+	// 		Send error message
+	// Else
+	// 	Invite user to channel
 	std::string inputNick = restOfCommand;
 	if(inputNick.empty())
 	{
@@ -191,20 +213,45 @@ void Commands::inviteCommand(int client_fd, std::string restOfCommand)
 
 void Commands::topicCommand(int client_fd, std::string restOfCommand)
 {
+	if(_user->getOperator() == false)
+	{
+		send(client_fd, "Not allowed", 11, 0);
+		return ;
+	}
 	std::string inputTopic = restOfCommand;
 	if(inputTopic.empty())
 	{
-		send(client_fd, "Invalid topic\n", 14, 0);
+		//TODO: Show to op the topic of the channel
 	}
-	//TODO: Change topic of the channel
+	else
+	{
+		//TODO: Change topic of the channel
+	}
 }
 
 void Commands::modeCommand(int client_fd, std::string restOfCommand)
 {
+	if(_user->getOperator() == false)
+	{
+		send(client_fd, "Not allowed", 11, 0);
+		return ;
+	}
 	std::string inputMode = restOfCommand;
 	if(inputMode.empty())
 	{
 		send(client_fd, "Invalid mode\n", 13, 0);
+	}
+	else
+	{
+		if(inputMode == "i")
+		{
+			//TODO: Change mode of the channel to invite only
+		}
+		else if (inputMode == "t")
+		{
+			//TODO: Change restrictions of the TOPIC command
+		}
+		//TODO: else if inputMode "k" change channel password with the rest of the command
 	}
 	//TODO: Change mode of the channel
 }
@@ -260,6 +307,7 @@ void Commands::parseCommand(int client_fd, std::string command)
 			modeCommand(client_fd, restOfCommand);
 			break;
 		default:
+			send(client_fd, "Invalid command\n", 16, 0);
 			break;
 	}
 }
