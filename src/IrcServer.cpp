@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/13 17:01:11 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/18 09:44:10 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,9 +118,9 @@ void IrcServer::startServer()
 		//exit(1);
 	}
 	std::cout << "Server started on port: " << _port << std::endl;
-	Channel *channel = new Channel("general");
+	//Channel *channel = new Channel("general");
 	//TODO: handle alloc error
-	addChannel(channel);
+	//addChannel(channel);
 }
 
 void IrcServer::run()
@@ -160,8 +160,8 @@ void IrcServer::run()
 					newPoll.events = POLLIN;
 					newPoll.revents = 0;
 					_poll_fds.push_back(newPoll);
-					send(client_fd, "NICK:\n", 5, 0);
 					_users.back()->validateUser(client_fd);
+					std::cout << RPL_WELCOME(_users.back()->getNick()) << std::endl;
 				}
 				else
 				{
@@ -188,7 +188,7 @@ void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 		send(client_fd, "Invalid nickname\n", 17, 0);
 	}
 	//TODO: Check if nickname is already in use and it's uppercase and lowercase letters. Ex: DOT it's the same nick as dot
-	getUserFd(client_fd)->setUser(inputNick, getUserFd(client_fd)->getPass());
+	getUserFd(client_fd)->setUser(inputNick, getUserFd(client_fd)->getUser());
 	msg = "User " + inputNick + " changed nickname\n";
 	send(client_fd, msg.c_str(), msg.length(), 0);
 	std::cout << msg;

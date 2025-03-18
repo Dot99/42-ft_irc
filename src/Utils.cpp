@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/13 16:27:47 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/18 09:22:44 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,8 +91,20 @@ std::string readLine(int client_fd, unsigned long max_length) {
 	bool too_long = false;
 
 	while ((bytes_received = recv(client_fd, &c, 1, 0)) > 0) {
-		if (c == '\n' || c == '\r')  // End of input
+		//Handle CLRF
+		if (c == '\r') {
+			// Peek the next character to check for '\n'
+			char next_char;
+			int peeked_bytes = recv(client_fd, &next_char, 1, MSG_PEEK);
+			if (peeked_bytes > 0 && next_char == '\n') {
+				// Consume the '\n' character
+				recv(client_fd, &next_char, 1, 0);
+			}
 			break;
+		} 
+		else if (c == '\n') {
+			break;
+		}
 		if (!too_long) {
 			if (input.size() < max_length) {
 				input += c;

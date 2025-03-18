@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:25:36 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/13 16:08:31 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/18 08:55:17 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ class Client
 		Channel *_channel;
 		int fd;
 		std::string _nick;
-		std::string _pass;
+		std::string _user;
 		bool _isAuthenticated;
 		bool _isOperator;
 		struct sockaddr_in _client_adrr;
@@ -44,7 +44,7 @@ class Client
 		void setOperator(bool op);
 		void setUser(std::string nick, std::string pass);
 		std::string getNick();
-		std::string getPass();
+		std::string getUser();
 		bool getAuthenticated();
 		bool getOperator();
 		int getFd();

@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/07 08:57:34 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/13 16:26:01 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/18 09:41:11 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@
 #include "Client.hpp"
 #include "Channel.hpp"
 #include "IrcServer.hpp"
+#include "RPLCommands.hpp"
 
 #define SPACES 1
 #define ENTER 2

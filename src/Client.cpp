@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/17 14:50:28 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/18 10:28:26 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,12 +55,15 @@ void Client::validateUser(int client_fd)
 		inputNick = readLine(client_fd, 9); //(9) Max Nickname characters
 		if(inputNick.empty())
 		{
-			send(client_fd, "Invalid nickname\n", 17, 0);
+			std::cout << ERR_NONICKNAMEGIVEN(inputNick) << std::endl;
+			send(client_fd, "Error\nEnter nickname: ", 23, 0);
 			continue; // Ask for nickname again
 		}
 		if(inputNick == getNick())
 		{
-			send(client_fd, "Nickname already in use\n", 24, 0);
+			std::cout << ERR_NICKNAMEINUSE(inputNick) << std::endl;
+			send(client_fd, "Error\nEnter nickname: ", 23, 0);
+			continue;
 		}
 		else
 		{
@@ -71,63 +74,18 @@ void Client::validateUser(int client_fd)
 	std::string inputUser;
 	while(true)
 	{
-		inputUser = readLine(client_fd, 510); 
+		inputUser = readLine(client_fd, 512); //(512) Max User characters
+		if(inputUser.empty())
+		{
+			send(client_fd, "Invalid user\n", 17, 0);
+			continue; // Ask for password again
+		}
+		else
+		{
+			setUser(inputNick, inputUser);
+			break;
+		}
 	}
-	// std::string inputNick;
-	// while (true)
-	// {
-	// 	inputNick = readLine(client_fd, 9); //(9) Max Nickname characters
-	// 	if (inputNick.empty())
-	// 	{
-	// 		send(client_fd, "Invalid nickname\n", 17, 0);
-	// 		continue; // Ask for nickname again
-	// 	}
-	// 	if (inputNick == getNick())
-	// 	{
-	// 		break; // Valid nickname
-	// 	}
-	// 	else
-	// 	{
-	// 		if(inputNick == getNick())
-	// 		{
-	// 			send(client_fd, "Nickname already in use\n", 24, 0);
-	// 		}
-	// 		else
-	// 		{
-	// 			setUser(inputNick, "");
-	// 			break;
-	// 		}
-	// 	}
-	// }
-
-	// send(client_fd, "PASS:\n", 5, 0);
-	// std::string inputPwd = readLine(client_fd, 510); //(510) Max pwd characters
-	// if (inputPwd.empty())
-	// {
-	// 	send(client_fd, "Invalid password\n", 17, 0);
-	// 	close(client_fd);
-	// 	return;
-	// }
-	// std::cout << inputPwd << std::endl;
-	// std::cout << getPass() << std::endl;
-	// if (inputPwd == getPass())
-	// {
-	// 	setUser(inputNick, inputPwd);
-	// 	setAuthenticated(true);
-	// 	send(client_fd, "Welcome to IRC server\n\n", 23, 0);
-	// }
-	// //TODO: Check if getPass() is empty due to \n
-	// else if (getPass().empty())
-	// {
-	// 	setUser(inputNick, inputPwd);
-	// 	setAuthenticated(true);
-	// 	send(client_fd, "Welcome to IRC server\n\n", 23, 0);
-	// }
-	// else
-	// {
-	// 	send(client_fd, "Invalid password\n", 17, 0);
-	// 	close(client_fd);
-	// }
 }
 
 /**
@@ -234,7 +192,7 @@ int Client::acceptClient(int client_fd)
 		// close(_server.getSock());
 		return(-1);
 	}
-	std::cout << "Client connected" << std::endl;
+	std::cout << "DEBUG: Client connected" << std::endl;
 	return (checkPwd(client_fd));
 }
 
@@ -252,10 +210,10 @@ int Client::acceptClient(int client_fd)
  * 
  * @return std::string Nickname
 */
-void Client::setUser(std::string nick, std::string pass)
+void Client::setUser(std::string nick, std::string user)
 {
 	_nick = nick;
-	_pass = pass;
+	_user = user;
 }
 
 /**
@@ -264,6 +222,16 @@ void Client::setUser(std::string nick, std::string pass)
  * @return std::string Nickname
 */
 std::string Client::getNick()
+{
+	return _nick;
+}
+
+/**
+ * @brief Get the User Username
+ * 
+ * @return std::string User
+*/
+std::string Client::getUser()
 {
 	return _nick;
 }
@@ -306,16 +274,6 @@ Channel *Client::getChannel()
 int Client::getFd()
 {
 	return fd;
-}
-
-/**
- * @brief Get the Nick object
- * 
- * @return std::string Nickname
-*/
-std::string Client::getPass()
-{
-	return _pass;
 }
 
 /**
