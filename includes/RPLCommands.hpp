@@ -6,14 +6,14 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:50:27 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/18 10:27:08 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/18 16:26:59 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 
 /*------Connection replies-----*/
-#define RPL_WELCOME(nick) ("001 " + nick + " :Welcome to the IRC Server, " + nick + "\n")
+#define RPL_WELCOME(nick, network) ("001 " + nick + " :Welcome to "+ network + ", " + nick + "\n")
 
 #define RPL_YOURHOST(server) ("002 :Your host is " + server + ", running version 1.0\n")
 
@@ -49,8 +49,14 @@
 
 #define ERR_UNKNOWNCOMMAND(command) ("421 " + command + " :Unknown command\n")
 
-#define ERR_NONICKNAMEGIVEN(nick) ("431 " + nick + " :No nickname given\n")
+#define ERR_NONICKNAMEGIVEN "431 :No nickname given\n"
 
 #define ERR_NICKNAMEINUSE(nick) ("433 " + nick + " :Nickname is already in use\n")
+
+#define ERR_NEEDMOREPARAMS(command) ("461 " + command + " :Not enough parameters\n")
+
+#define ERR_ALREADYREGISTRED "462 :You may not reregister\n"
+
+#define ERR_PASSWDMISMATCH "464 :Password incorrect\n"
 /*-----------------------------*/
 

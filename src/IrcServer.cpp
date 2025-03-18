@@ -6,16 +6,17 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/18 09:44:10 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/18 16:36:32 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IrcServer.hpp"
 
 /**
- * @brief Construct a new Parameterized Irc Server:: Irc Server object
+ * @brief Construct a new IrcServer object
+ * 
  * @param args Arguments
-*/
+ */
 IrcServer::IrcServer(const std::string args[])
 {
 	std::istringstream iss(args[1]);
@@ -24,55 +25,32 @@ IrcServer::IrcServer(const std::string args[])
 		std::cerr << "Erro: Porta inválida\n";
 		//std::exit(EXIT_FAILURE);
 	}
-	_pwd = args[2];
+	setArgs(args);
 	startServer();
 }
 
 /**
- * @brief Destroy the Irc Server:: Irc Server object
-*/
+ * @brief Destroy the IrcServer object
+ * 
+ */
 IrcServer::~IrcServer()
 {
+	close(_socket);
+	for (size_t i = 0; i < _users.size(); i++)
+	{
+		delete _users[i];
+	}
+	for (size_t i = 0; i < _channels.size(); i++)
+	{
+		delete _channels[i];
+	}
+	_poll_fds.clear();
 }
 
 /**
- * @brief Copy the IrcServer object
+ * @brief Start the server
  * 
- * @param rhs IrcServer object to copy
- * @return IrcServer& IrcServer object
-*/
-IrcServer &IrcServer::operator=(const IrcServer &rhs)
-{
-	_port = rhs._port;
-	_pwd = rhs._pwd;
-	return (*this);
-}
-
-/**
- * @brief Set the Client object
- * 
- * @param client Client
-*/
-void IrcServer::addChannel(Channel *channel)
-{
-	_channels.push_back(channel);
-
-}
-
-/**
- * @brief Set the Client object
- * 
- * @param client Client
-*/
-void IrcServer::addUser(Client *client)
-{
-	_users.push_back(client);
-}
-
-/**
- * @brief Starts the IRC server
- * 
-*/
+ */
 void IrcServer::startServer()
 {
 	/*
@@ -85,14 +63,14 @@ void IrcServer::startServer()
 	if(_socket < 0)
 	{
 		std::cerr << "Error: Socket creation failed" << std::endl;
-		//exit(1);
+		throw std::exception();
 	}
 	int opt = 1;
 	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
 	{
 		std::cerr << "Error: Setsockopt failed" << std::endl;
 		close(_socket);
-		//exit(1);
+		throw std::exception();
 	}
 	// Bind the socket to an IP / port
 	// sockaddr_in is a structure containing an internet address
@@ -108,19 +86,14 @@ void IrcServer::startServer()
 		std::cerr << "Error: Bind failed" << std::endl;
 		close(_socket);
 		throw std::exception();
-		//exit(1);
 	}
 	if (listen(_socket, 5) < 0)
 	{
 		std::cerr << "Error: Listen failed" << std::endl;
 		close(_socket);
 		throw std::exception();
-		//exit(1);
 	}
 	std::cout << "Server started on port: " << _port << std::endl;
-	//Channel *channel = new Channel("general");
-	//TODO: handle alloc error
-	//addChannel(channel);
 }
 
 void IrcServer::run()
@@ -149,19 +122,20 @@ void IrcServer::run()
 					//TODO: handle alloc error
 					addUser(newClient);
 					client_fd = _users.back()->acceptClient(_poll_fds[i].fd);
+					std::cout << "Client_fd: " << client_fd << std::endl;
 					if (client_fd < 0)
 					{
 						std::cerr << "Error accepting client" << std::endl;
-						// return;
+						throw std::exception();
 					}
-					_users.back()->setFd(client_fd);
 					struct pollfd newPoll;
 					newPoll.fd = client_fd;
 					newPoll.events = POLLIN;
 					newPoll.revents = 0;
 					_poll_fds.push_back(newPoll);
-					_users.back()->validateUser(client_fd);
-					std::cout << RPL_WELCOME(_users.back()->getNick()) << std::endl;
+					//_users.back()->validateUser(client_fd);
+					std::string server = _server_name;
+					sendClientMsg(client_fd, RPL_WELCOME(_users.back()->getNick(), server));
 				}
 				else
 				{
@@ -172,6 +146,59 @@ void IrcServer::run()
 	}
 }
 
+/**
+ * @brief Set the arguments
+ * 
+ * @param args Arguments
+ */
+void IrcServer::setArgs(const std::string args[])
+{
+	std::istringstream iss(args[1]);
+	if (!(iss >> _port))
+	{
+		std::cerr << "Erro: Invalid Port\n";
+		throw std::exception();
+	}
+	_server_name = "Club Penguin";
+	_pwd = args[2];
+	// Get current time
+	std::time_t now = std::time(0);
+	std::tm *ltm = std::localtime(&now);
+	std::stringstream ss;
+	ss << 1900 + ltm->tm_year << "-"
+		<< 1 + ltm->tm_mon << "-"
+		<< ltm->tm_mday << " "
+		<< ltm->tm_hour << ":"
+		<< ltm->tm_min << ":"
+		<< ltm->tm_sec;
+	_now = ss.str();
+	std::cout << RPL_YOURHOST(_server_name) << std::endl;
+	std::cout << RPL_CREATED(_now) << std::endl;
+	std::cout << RPL_MYINFO(_server_name, "1.0") << std::endl;
+}
+
+/**
+ * @brief Set the Client object
+ * 
+ * @param client Client
+*/
+void IrcServer::addChannel(Channel *channel)
+{
+	_channels.push_back(channel);
+
+}
+
+/**
+ * @brief Set the Client object
+ * 
+ * @param client Client
+*/
+void IrcServer::addUser(Client *client)
+{
+	_users.push_back(client);
+}
+
+
 /*---------------------------- COMMANDS ---------------------------- */
 
 /**
@@ -181,17 +208,26 @@ void IrcServer::run()
 void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 {
 	std::string inputNick = restOfCommand;
-	inputNick = clean_input(inputNick, SPACES);
 	std::string msg;
 	if(inputNick.empty())
 	{
-		send(client_fd, "Invalid nickname\n", 17, 0);
+		sendClientMsg(client_fd, ERR_NONICKNAMEGIVEN);
+		//TODO: Close connection
 	}
-	//TODO: Check if nickname is already in use and it's uppercase and lowercase letters. Ex: DOT it's the same nick as dot
-	getUserFd(client_fd)->setUser(inputNick, getUserFd(client_fd)->getUser());
-	msg = "User " + inputNick + " changed nickname\n";
-	send(client_fd, msg.c_str(), msg.length(), 0);
-	std::cout << msg;
+	else
+	{
+		//TODO: ADD CHECK NICK
+		//Check if it's uppercase and lowercase letters. Ex: DOT it's the same nick as dot
+		//Check uppercase, lowercase and numbers + special characters
+		// if(getUserByNick(restOfCommand))
+		// {
+		// 	sendClientMsg(client_fd, ERR_NICKNAMEINUSE(inputNick));
+		// 	//TODO: Close connection
+		// }
+		// else
+		std::cout << "Nick:[" << inputNick << "]" << std::endl;
+		_user->setNick(inputNick);
+	}
 }
 
 /**
@@ -205,7 +241,6 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 	std::string passwd;
 	
 	iss >> channelName >> passwd;
-	channelName = clean_input(channelName, SPACES);
 	bool channelExists = false;
 	std::string msg;
 	if(channelName.empty())
@@ -285,7 +320,6 @@ void IrcServer::leaveCommand(int client_fd)
 {
 	if (_user->getChannel())
 	{
-		sendClientMsg(client_fd, "User left channel\n", 0);
 		_user->getChannel()->removeUser(_user);
 		_user->setChannel(NULL);
 	}
@@ -310,10 +344,9 @@ void IrcServer::listCommand(int client_fd, std::string restOfCommand)
 	}
 	else
 	{
-		std::string pattern = clean_input(restOfCommand, SPACES);
 		for (size_t i = 0; i < _channels.size(); i++)
 		{
-			if (wildcardMatch(_channels[i]->getName(), pattern))
+			if (wildcardMatch(_channels[i]->getName(), restOfCommand))
 			{
 				send(client_fd, "Channel: ", 9, 0);
 				send(client_fd, _channels[i]->getName().c_str(), _channels[i]->getName().length(), 0);
@@ -321,30 +354,6 @@ void IrcServer::listCommand(int client_fd, std::string restOfCommand)
 			}
 		}
 	}
-}
-
-void IrcServer::usersCommand(int client_fd)
-{
-	size_t i = 0;
-	std::string msg;
-	for (;i < _channels.size(); i++)
-	{
-		if (_channels[i]->getUserFd(client_fd))
-			break;
-	}
-	if (i == _channels.size() || !_user->getChannel())
-	{
-		send(client_fd, "You are not in a channel\n", 25, 0);
-		return ;
-	}
-	msg = "Channel: " + _channels[i]->getName();
-	send(client_fd, msg.c_str(), msg.length(), 0);
-	for (size_t j = 0; j < _channels[i]->getUsers().size(); j++)
-	{
-		msg = "\nUser: " + _channels[i]->getUsers()[j]->getNick();
-		send(client_fd, msg.c_str(), msg.length(), 0);
-	}
-	//TODO: Pretty print of the users in the channel
 }
 
 void IrcServer::exitCommand(int client_fd)
@@ -357,7 +366,6 @@ void IrcServer::exitCommand(int client_fd)
 
 void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 {
-	restOfCommand = clean_input(restOfCommand, SPACES);
 	if(_user->getOperator() == false)
 	{
 		send(client_fd, "Not allowed", 11, 0);
@@ -450,7 +458,6 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 {
 	std::string mode = "itkol";
-	restOfCommand = clean_input(restOfCommand, SPACES);
 	if(_user->getOperator() == false)
 	{
 		send(client_fd, "Not allowed", 11, 0);
@@ -494,21 +501,68 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 	//TODO: Change mode of the channel
 }
 
+void IrcServer::passCommand(int client_fd, std::string restOfCommand)
+{
+	std::cout << restOfCommand << std::endl;
+	if (_user->getAuthenticated() == true)
+	{
+		sendClientMsg(client_fd, ERR_ALREADYREGISTRED);
+	}
+	else if(restOfCommand != _pwd)
+	{
+		sendClientMsg(client_fd, ERR_PASSWDMISMATCH);
+		//TODO: Close connection
+	}
+	else
+	{
+		_user->setAuthenticated(true);
+	}
+}
+
+void IrcServer::userCommand(int client_fd, std::string restOfCommand)
+{
+	std::istringstream iss(restOfCommand);
+	std::string user;
+	std::string zero;
+	std::string asterisk;
+	std::string realName;
+	
+	iss >> user >> zero >> asterisk >> realName;
+	std::cout << "user[" << user << "]" << std::endl;
+	std::cout << "zero[" << zero << "]" << std::endl;
+	std::cout << "asterisk[" << asterisk << "]" << std::endl;
+	std::cout << "realName[" << realName << "]" << std::endl;
+	std::string inputUser = restOfCommand;
+	if(inputUser.empty())
+	{
+		std::string user = "USER";
+		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(user));	
+	}
+	else
+	{
+		_user->setUser(inputUser);
+		sendClientMsg(client_fd, "CAP * LS");
+	}
+}
+
 void IrcServer::parseCommand(int client_fd, std::string command)
 {
-	std::string commands[10] = {"/nick", "/join", "/leave", "/list", "/users", "/exit", "/kick",  "/invite", "/topic", "/mode"};
+	std::string commands[11] = {"NICK", "JOIN", "LEAVE", "LIST", "EXIT", "KICK",  "INVITE", "TOPIC", "MODE", "PASS", "USER"};
 	int i = 0;
 	std::string foundCommand;
 	std::string restOfCommand;
 	_user = getUserFd(client_fd);
-	for(; i < 10; i++)
+	for(; i < 11; i++)
 	{
 		size_t pos = command.find(commands[i]);
 		if(pos != std::string::npos)
 		{
 			foundCommand = commands[i];
 			restOfCommand = command.substr(pos + commands[i].length());
-			restOfCommand = clean_input(restOfCommand, ENTER);
+			if(foundCommand != "INVITE" && foundCommand != "USER")
+				restOfCommand = clean_input(restOfCommand, SPACES);
+			else
+				restOfCommand = clean_input(restOfCommand, ENTER);
 			break;
 		}
 	}
@@ -527,22 +581,25 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 			listCommand(client_fd, restOfCommand);
 			break;
 		case 4:
-			usersCommand(client_fd);
-			break;
-		case 5:
 			exitCommand(client_fd);
 			break;
-		case 6:
+		case 5:
 			kickCommand(client_fd, restOfCommand);
 			break;
-		case 7:
+		case 6:
 			inviteCommand(client_fd, restOfCommand);
 			break;
-		case 8:
+		case 7:
 			topicCommand(client_fd, restOfCommand);
 			break;
-		case 9:
+		case 8:
 			modeCommand(client_fd, restOfCommand);
+			break;
+		case 9:
+			passCommand(client_fd, restOfCommand);
+			break;
+		case 10:
+			userCommand(client_fd, restOfCommand);
 			break;
 		default:
 			send(client_fd, "Invalid command\n", 16, 0);

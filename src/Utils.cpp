@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/18 09:22:44 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/18 16:33:41 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,7 @@ std::string readLine(int client_fd, unsigned long max_length) {
 	char c;
 	int bytes_received;
 	bool too_long = false;
-
+	
 	while ((bytes_received = recv(client_fd, &c, 1, 0)) > 0) {
 		//Handle CLRF
 		if (c == '\r') {
@@ -101,16 +101,15 @@ std::string readLine(int client_fd, unsigned long max_length) {
 				recv(client_fd, &next_char, 1, 0);
 			}
 			break;
-		} 
+		}
 		else if (c == '\n') {
 			break;
 		}
 		if (!too_long) {
-			if (input.size() < max_length) {
+			if (input.size() < max_length )
 				input += c;
-			} else {
+			else 
 				too_long = true;  // Mark that we are exceeding the limit
-			}
 		}
 	}
 
@@ -124,17 +123,10 @@ std::string readLine(int client_fd, unsigned long max_length) {
 	return input;
 }
 
-void sendClientMsg(int client_fd, const char *msg, int flags) {
-	std::time_t now = std::time(NULL);
-	std::tm* localTime = std::localtime(&now);
-	int hour = localTime->tm_hour;
-	int min = localTime->tm_min;
-	std::stringstream ss;
-	ss << "[" << hour << ":" << min << "] " << msg;
-	std::string full_msg = ss.str();
-	if (send(client_fd, full_msg.c_str(), full_msg.length(), flags) == -1) {
-		std::cerr << "Error: send() failed" << std::endl;
-	}
+void sendClientMsg(int client_fd, std::string msg)
+{
+	if (send(client_fd, msg.c_str(), msg.length(), 0) == -1)
+		std::cerr << "Error sending response" << std::endl;
 }
 
 std::string clean_input(std::string input, int what )

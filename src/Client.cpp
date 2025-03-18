@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/18 10:28:26 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/18 16:37:56 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,9 @@
 */
 Client::Client(IrcServer &server) : _server(server)
 {
+	_isAuthenticated = false;
+	_isOperator = false;
+	_channel = NULL;
 };
 
 /**
@@ -43,49 +46,6 @@ void Client::removeClient(int client_fd)
 			break;
 		}
 	}
-	// _client.erase(client_fd);
-}
-
-
-void Client::validateUser(int client_fd)
-{
-	std::string inputNick;
-	while(true)
-	{
-		inputNick = readLine(client_fd, 9); //(9) Max Nickname characters
-		if(inputNick.empty())
-		{
-			std::cout << ERR_NONICKNAMEGIVEN(inputNick) << std::endl;
-			send(client_fd, "Error\nEnter nickname: ", 23, 0);
-			continue; // Ask for nickname again
-		}
-		if(inputNick == getNick())
-		{
-			std::cout << ERR_NICKNAMEINUSE(inputNick) << std::endl;
-			send(client_fd, "Error\nEnter nickname: ", 23, 0);
-			continue;
-		}
-		else
-		{
-			setUser(inputNick, "");
-			break;
-		}
-	}
-	std::string inputUser;
-	while(true)
-	{
-		inputUser = readLine(client_fd, 512); //(512) Max User characters
-		if(inputUser.empty())
-		{
-			send(client_fd, "Invalid user\n", 17, 0);
-			continue; // Ask for password again
-		}
-		else
-		{
-			setUser(inputNick, inputUser);
-			break;
-		}
-	}
 }
 
 /**
@@ -104,7 +64,7 @@ void Client::handleChannelMessage(int client_fd, char *buffer)
 		for (size_t i = 0; i < _channel->getUsers().size(); i++)
 		{
 			if (_channel->getUsers()[i]->getFd() != client_fd)
-				sendClientMsg(_channel->getUsers()[i]->getFd(), msg.c_str(), 0);
+				sendClientMsg(_channel->getUsers()[i]->getFd(), msg.c_str());
 		}
 	}
 }
@@ -192,11 +152,53 @@ int Client::acceptClient(int client_fd)
 		// close(_server.getSock());
 		return(-1);
 	}
-	std::cout << "DEBUG: Client connected" << std::endl;
-	return (checkPwd(client_fd));
+	setFd(client_fd);
+	std::string input = readLine(client_fd, 512);
+	if(input.empty())
+	{
+		close(client_fd);
+		return (-1);
+	}
+	if(input.find("CAP LS") != std::string::npos)
+		input = readLine(client_fd, 512);
+	validateUser(client_fd, input);
+	return(client_fd);
 }
 
-
+void Client::validateUser(int client_fd, std::string input)
+{
+	if(input.empty())
+	{
+		std::string command = "PASS";
+		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(command));
+		//Close connection 
+		//TODO: Make function to close connection client_fd
+	}
+	else
+	{
+		_server.parseCommand(client_fd, input);
+		input = readLine(client_fd, 512);
+		if(input.empty())
+		{
+			std::string command = "NICK";
+			sendClientMsg(client_fd, ERR_NONICKNAMEGIVEN);
+			//Close connection
+		}
+		else
+		{
+			_server.parseCommand(client_fd, input);
+			input = readLine(client_fd, 512);
+			if(input.empty())
+			{
+				std::string command = "USER";
+				sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(command));
+				//Close connection
+			}
+			else
+				_server.parseCommand(client_fd, input);
+		}
+	}
+}
 
 
 
@@ -210,10 +212,19 @@ int Client::acceptClient(int client_fd)
  * 
  * @return std::string Nickname
 */
-void Client::setUser(std::string nick, std::string user)
+void Client::setUser(std::string user)
+{
+	_user = user;
+}
+
+/**
+ * @brief Set the Nick object
+ * 
+ * @return std::string Nickname
+*/
+void Client::setNick(std::string nick)
 {
 	_nick = nick;
-	_user = user;
 }
 
 /**
@@ -233,7 +244,7 @@ std::string Client::getNick()
 */
 std::string Client::getUser()
 {
-	return _nick;
+	return _user;
 }
 
 /**
