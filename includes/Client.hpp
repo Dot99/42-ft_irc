@@ -13,10 +13,6 @@
 #pragma once
 #include "Utils.hpp"
 
-
-class IrcServer;
-class Channel;
-
 class Client
 {
 	private:
@@ -34,7 +30,7 @@ class Client
 
 		void validateUser(int client_fd, std::string input);
 		int acceptClient(int client_fd);
-		void handleChannelMessage(int client_fd, char *buffer);
+		void handleChannelMessage(int client_fd, const std::string buffer);
 		void handleClientMessage(int client_fd);
 		void removeClient(int client_fd);
 		int checkPwd(int client_fd);

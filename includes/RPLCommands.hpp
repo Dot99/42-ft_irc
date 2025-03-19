@@ -27,11 +27,13 @@
 #define RPL_LIST "322"
 #define RPL_LISTEND "323"
 
-#define RPL_TOPIC(nick, channel, topic) ("332 " + nick + " " + channel + " :" + topic + "\n")
+#define RPL_TOPIC(nick, channel, topic) (":" + SERVER_NAME + " 332 " + nick + " " + channel + " :" + topic + "\r\n")
+
 #define RPL_TOPICWHOTIME "333"
 
-#define RPL_NAMREPLY(nick, channel, users) ("353 " + nick + " = " + channel + " :" + users + "\n")
-#define RPL_ENDOFNAMES "366"
+#define RPL_NAMREPLY(nick, channel, users) (": 353 " + nick + " = " + channel + " :" + users + "\n")
+
+#define RPL_ENDOFNAMES(nickname, channel) (": 366 " + nickname + " " + channel + " :End of NAMES list" + "\r\n")
 /*-----------------------------*/
 
 
@@ -51,7 +53,9 @@
 
 #define ERR_NONICKNAMEGIVEN "431 :No nickname given\n"
 
-#define ERR_NICKNAMEINUSE(nick) ("433 " + nick + " :Nickname is already in use\n")
+#define ERR_NICKNAMEINUSE(nick) (nick + " :Nickname is already in use\n")
+
+#define ERR_ERRONEUSNICKNAME(nick) "432" + nick + " :Erroneus nickname\n"
 
 #define ERR_NEEDMOREPARAMS(command) ("461 " + command + " :Not enough parameters\n")
 

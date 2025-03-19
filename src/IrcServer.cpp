@@ -122,7 +122,6 @@ void IrcServer::run()
 					//TODO: handle alloc error
 					addUser(newClient);
 					client_fd = _users.back()->acceptClient(_poll_fds[i].fd);
-					std::cout << "Client_fd: " << client_fd << std::endl;
 					if (client_fd < 0)
 					{
 						std::cerr << "Error accepting client" << std::endl;
@@ -135,7 +134,8 @@ void IrcServer::run()
 					_poll_fds.push_back(newPoll);
 					//_users.back()->validateUser(client_fd);
 					std::string server = _server_name;
-					sendClientMsg(client_fd, RPL_WELCOME(_users.back()->getNick(), server));
+					if (!_users.back()->getNick().empty() && !_users.back()->getUser().empty() && _users.back()->getAuthenticated())
+						sendClientMsg(client_fd, RPL_WELCOME(_users.back()->getNick(), server));
 				}
 				else
 				{
@@ -202,35 +202,6 @@ void IrcServer::addUser(Client *client)
 /*---------------------------- COMMANDS ---------------------------- */
 
 /**
- * @brief Command to change the nickname of the user
- * @param client_fd File descriptor of the client
-*/
-void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
-{
-	std::string inputNick = restOfCommand;
-	std::string msg;
-	if(inputNick.empty())
-	{
-		sendClientMsg(client_fd, ERR_NONICKNAMEGIVEN);
-		//TODO: Close connection
-	}
-	else
-	{
-		//TODO: ADD CHECK NICK
-		//Check if it's uppercase and lowercase letters. Ex: DOT it's the same nick as dot
-		//Check uppercase, lowercase and numbers + special characters
-		// if(getUserByNick(restOfCommand))
-		// {
-		// 	sendClientMsg(client_fd, ERR_NICKNAMEINUSE(inputNick));
-		// 	//TODO: Close connection
-		// }
-		// else
-		std::cout << "Nick:[" << inputNick << "]" << std::endl;
-		_user->setNick(inputNick);
-	}
-}
-
-/**
  * @brief Command to join a channel
  * @param client_fd File descriptor of the client
 */
@@ -271,9 +242,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 					{
 						_channels[i]->addUser(_user);
 						_user->setChannel(_channels[i]);
-						msg = "User " + _user->getNick() + " added to channel: " + _channels[i]->getName() + "\n";
 						send(client_fd, msg.c_str(), msg.length(), 0);
-						std::cout << msg;
 						break;
 					}
 					else if (_channels[i]->getPassword() != passwd)
@@ -283,9 +252,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 					}
 					_channels[i]->addUser(_user);
 					_user->setChannel(_channels[i]);
-					msg = "User " + _user->getNick() + " added to channel: " + _channels[i]->getName() + "\n";
 					send(client_fd, msg.c_str(), msg.length(), 0);
-					std::cout << msg;
 					break;
 				}
 			}
@@ -299,15 +266,26 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 		addChannel(channel);
 		_channels[_channels.size() - 1]->addUser(_user);
 		_user->setChannel(_channels[_channels.size() - 1]);
-		msg = "\nChannel " + _channels[_channels.size() - 1]->getName() + " created and user " + _user->getNick() + " added\n\n";
 		_user->setOperator(true);
-		std::cout << msg;
+		if (channel->getTopic().empty())
+			channel->setTopic("General");
 	}
 	if (_user->getChannel())
-	{
-		send(client_fd, "\n          Channel: ", 20, 0);
-		send(client_fd, _user->getChannel()->getName().c_str(), _user->getChannel()->getName().size(), 0);
-		send(client_fd, "\n\n", 1, 0);
+	{	
+		std::string msg = ":" + _user->getNick() + " JOIN " + _user->getChannel()->getName() + "\r\n";
+		sendClientMsg(client_fd, msg);
+		sendClientMsg(client_fd, RPL_TOPIC(_user->getNick(), _user->getChannel()->getName(), _user->getChannel()->getTopic()));
+		std::string user_list;
+		std::vector<Client *> users = _user->getChannel()->getUsers();
+		for (size_t i = 0; i < users.size(); ++i)
+		{
+			user_list += users[i]->getNick();
+			if (i + 1 != users.size())
+				user_list += " ";
+		}
+		for (size_t i = 0; i < users.size(); i++)
+			sendClientMsg(users[i]->getFd(), RPL_NAMREPLY(_user->getNick(), _user->getChannel()->getName(), user_list));
+		sendClientMsg(client_fd, RPL_ENDOFNAMES(_user->getNick(), _user->getChannel()->getName()));
 	}
 	//TODO:Check if channel exists and if it has pwd
 }
@@ -503,7 +481,6 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 
 void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 {
-	std::cout << restOfCommand << std::endl;
 	if (_user->getAuthenticated() == true)
 	{
 		sendClientMsg(client_fd, ERR_ALREADYREGISTRED);
@@ -519,6 +496,26 @@ void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 	}
 }
 
+/**
+ * @brief Command to change the nickname of the user
+ * @param client_fd File descriptor of the client
+*/
+int IrcServer::nickCommand(int client_fd, std::string restOfCommand)
+{
+	std::string msg = checkNick(restOfCommand, _users);
+	if (!msg.empty())
+	{
+		sendClientMsg(client_fd, msg);
+		return (1);
+	}
+	else
+	{
+		_user->setNick(restOfCommand);
+		return (0);
+	}
+	return (0);
+}
+
 void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
@@ -528,10 +525,6 @@ void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 	std::string realName;
 	
 	iss >> user >> zero >> asterisk >> realName;
-	std::cout << "user[" << user << "]" << std::endl;
-	std::cout << "zero[" << zero << "]" << std::endl;
-	std::cout << "asterisk[" << asterisk << "]" << std::endl;
-	std::cout << "realName[" << realName << "]" << std::endl;
 	std::string inputUser = restOfCommand;
 	if(inputUser.empty())
 	{
@@ -541,25 +534,54 @@ void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 	else
 	{
 		_user->setUser(inputUser);
-		sendClientMsg(client_fd, "CAP * LS");
+		if (!_user->getNick().empty())
+			sendClientMsg(client_fd, "CAP * LS");
+	}
+}
+
+void IrcServer::parseAuthenticate(int client_fd, std::string parameter)
+{
+	std::string parameters[3] = {"PASS", "NICK", "USER"};
+	int i = 0;
+	std::string foundParameter;
+	std::string restOfParameter;
+	_user = getUserFd(client_fd);
+	for(; i < 3; i++)
+	{
+		size_t pos = parameter.find(parameters[i]);
+		if(pos != std::string::npos)
+		{
+			foundParameter = parameters[i];
+			restOfParameter = parameter.substr(pos + parameters[i].length());
+			restOfParameter = clean_input(restOfParameter, SPACES);
+			break;
+		}
+	}
+	switch(i)
+	{
+
+			break;
+		// default:
+		// 	sendClientMsg(client_fd, ERR_UNKNOWNCOMMAND);
+		// 	break;
 	}
 }
 
 void IrcServer::parseCommand(int client_fd, std::string command)
 {
-	std::string commands[11] = {"NICK", "JOIN", "LEAVE", "LIST", "EXIT", "KICK",  "INVITE", "TOPIC", "MODE", "PASS", "USER"};
+	std::string commands[12] = {"JOIN", "LEAVE", "LIST", "EXIT", "KICK",  "INVITE", "TOPIC", "MODE","PASS", "NICK", "USER", "PRIVMSG"};
 	int i = 0;
 	std::string foundCommand;
 	std::string restOfCommand;
 	_user = getUserFd(client_fd);
-	for(; i < 11; i++)
+	for(; i < 12; i++)
 	{
 		size_t pos = command.find(commands[i]);
 		if(pos != std::string::npos)
 		{
 			foundCommand = commands[i];
 			restOfCommand = command.substr(pos + commands[i].length());
-			if(foundCommand != "INVITE" && foundCommand != "USER")
+			if (foundCommand != "INVITE" &&  foundCommand != "USER" && foundCommand != "PRIVMSG")
 				restOfCommand = clean_input(restOfCommand, SPACES);
 			else
 				restOfCommand = clean_input(restOfCommand, ENTER);
@@ -569,40 +591,39 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 	switch(i)
 	{
 		case 0:
-			nickCommand(client_fd, restOfCommand);
-			break;
-		case 1:
 			joinCommand(client_fd, restOfCommand);
 			break;
-		case 2:
+		case 1:
 			leaveCommand(client_fd);
 			break;
-		case 3:
+		case 2:
 			listCommand(client_fd, restOfCommand);
 			break;
-		case 4:
+		case 3:
 			exitCommand(client_fd);
 			break;
-		case 5:
+		case 4:
 			kickCommand(client_fd, restOfCommand);
 			break;
-		case 6:
+		case 5:
 			inviteCommand(client_fd, restOfCommand);
 			break;
-		case 7:
+		case 6:
 			topicCommand(client_fd, restOfCommand);
 			break;
-		case 8:
+		case 7:
 			modeCommand(client_fd, restOfCommand);
 			break;
-		case 9:
+		case 8:
 			passCommand(client_fd, restOfCommand);
+			break;
+		case 9:
+			nickCommand(client_fd, restOfCommand);
 			break;
 		case 10:
 			userCommand(client_fd, restOfCommand);
-			break;
-		default:
-			send(client_fd, "Invalid command\n", 16, 0);
+		case 11:
+			_user->handleChannelMessage(client_fd, restOfCommand);
 			break;
 	}
 }
@@ -669,8 +690,6 @@ Channel *IrcServer::getChannelByName(std::string name)
 {
 	for (size_t i = 0; i < _channels.size(); i++)
 	{
-		std::cout << "channel name[" << _channels[i]->getName() << "]" << std::endl;
-		std::cout << "name[" << name << "]" << std::endl;
 		if (_channels[i]->getName() == name)
 		{
 			return _channels[i];

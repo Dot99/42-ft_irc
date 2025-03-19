@@ -35,8 +35,13 @@
 #define SPACES 1
 #define ENTER 2
 
+class Channel;
+class Client;
+class IrcServer;
+
 bool checkArgs(int argc, char **argv, std::string args[]);
 std::string readLine(int client_fd, unsigned long max_length);
 void sendClientMsg(int client_fd, std::string msg);
 std::string clean_input(std::string input, int what );
 bool wildcardMatch(const std::string &str, const std::string &pattern);
+std::string checkNick(const std::string& nick, std::vector<Client *> users);

@@ -54,19 +54,32 @@ void Client::removeClient(int client_fd)
  * @param client_fd Client file descriptor
  * @param buffer Buffer
 */
-void Client::handleChannelMessage(int client_fd, char *buffer)
+void Client::handleChannelMessage(int client_fd, const std::string restOfCommand)
 {
-	if (buffer[0] == '\n')
+	std::string Name, message, msg;
+	size_t spacePos, msgPos, hashPos;
+	
+	hashPos = restOfCommand.find("#");
+	if (hashPos == std::string::npos)
 		return;
-	std::string msg = getNick() + ": " + buffer;
-	if (_channel)
-	{
-		for (size_t i = 0; i < _channel->getUsers().size(); i++)
-		{
-			if (_channel->getUsers()[i]->getFd() != client_fd)
-				sendClientMsg(_channel->getUsers()[i]->getFd(), msg.c_str());
-		}
+	spacePos = restOfCommand.find(" ");
+	if (spacePos == std::string::npos)
+		return;
+	Name = restOfCommand.substr(0, spacePos);
+	msgPos = restOfCommand.find(":");
+	if (msgPos == std::string::npos || msgPos + 1 >= restOfCommand.size())
+		return;
+	message = restOfCommand.substr(msgPos + 1);
+    if (message.empty() || !_channel){
+        return;
 	}
+	msg = ":" + getNick() + " PRIVMSG " + Name + " :" + message + "\r\n";
+    std::vector<Client *> users = _channel->getUsers();
+    for (size_t i = 0; i < users.size(); i++)
+    {
+        if (users[i]->getFd() != client_fd)
+            sendClientMsg(users[i]->getFd(), msg.c_str());
+    }
 }
 
 /**
@@ -79,7 +92,7 @@ void Client::handleClientMessage(int client_fd)
 {
 	char buffer[1024];
 	int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-	if (bytes_received < 0) // Client disconnected
+	if (bytes_received < 0)
 	{
 		std::cout << "Client " << client_fd << " disconnected." << std::endl;
 		close(client_fd);
@@ -88,12 +101,7 @@ void Client::handleClientMessage(int client_fd)
 		return;
 	}
 	buffer[bytes_received] = '\0';
-	if (buffer[0] && buffer[0] == '/')
-		_server.parseCommand(client_fd, buffer);
-	else
-	{
-		handleChannelMessage(client_fd, buffer);
-	}
+	_server.parseCommand(client_fd, buffer);
 	// TODO: Parse and process IRC commands here
 	/*
 		Check if there is a command sent by client
@@ -178,25 +186,16 @@ void Client::validateUser(int client_fd, std::string input)
 	{
 		_server.parseCommand(client_fd, input);
 		input = readLine(client_fd, 512);
+		_server.parseCommand(client_fd, input);
+		input = readLine(client_fd, 512);
 		if(input.empty())
 		{
-			std::string command = "NICK";
-			sendClientMsg(client_fd, ERR_NONICKNAMEGIVEN);
+			std::string command = "USER";
+			sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(command));
 			//Close connection
 		}
 		else
-		{
 			_server.parseCommand(client_fd, input);
-			input = readLine(client_fd, 512);
-			if(input.empty())
-			{
-				std::string command = "USER";
-				sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(command));
-				//Close connection
-			}
-			else
-				_server.parseCommand(client_fd, input);
-		}
 	}
 }
 

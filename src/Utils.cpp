@@ -178,3 +178,25 @@ bool wildcardMatch(const std::string &str, const std::string &pattern)
 	}
 	return patternIndex == pattern.size();
 }
+
+std::string checkNick(const std::string& nick, std::vector<Client *> users)
+{
+    if (nick.empty())
+        return ERR_NONICKNAMEGIVEN;
+    if (isdigit(nick[0]))
+        return ERR_ERRONEUSNICKNAME(nick);
+    
+    for (size_t i = 0; i < nick.length(); i++)
+    {
+        char c = nick[i];
+        if (!isalnum(c) && c != '[' && c != ']' && c != '{' && c != '}' && c != '\\' && c != '|' && c != '_')
+            return ERR_ERRONEUSNICKNAME(nick);
+    }
+	for (size_t i = 0; i < users.size(); i++)
+	{
+		if (users[i]->getNick() == nick)
+			return ERR_NICKNAMEINUSE(nick);
+	}
+	
+    return "";
+}

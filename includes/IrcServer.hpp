@@ -13,8 +13,7 @@
 #pragma once
 #include "Utils.hpp"
 
-class Client;
-class Channel;
+const std::string SERVER_NAME = "Club Penguin";
 
 class IrcServer
 {
@@ -42,7 +41,7 @@ class IrcServer
 		//-----------------COMMANDS-----------------//
 		void leaveCommand(int client_fd);
 		void exitCommand(int client_fd);
-		void nickCommand(int client_fd, std::string restOfCommand);
+		int nickCommand(int client_fd, std::string restOfCommand);
 		void joinCommand(int client_fd, std::string restOfCommand);
 		void listCommand(int client_fd, std::string restOfCommand);
 		void kickCommand(int client_fd, std::string restOfCommand);
@@ -52,7 +51,7 @@ class IrcServer
 		void parseCommand(int client_fd, std::string command);
 		void passCommand(int client_fd, std::string restOfCommand);
 		void userCommand(int client_fd, std::string restOfCommand);
-		
+		void parseAuthenticate(int client_fd, std::string paremeter);
 		//-----------------GETTERS/SETTERS-----------------//
 		int getSock() const;
 		void setArgs(const std::string args[]);
