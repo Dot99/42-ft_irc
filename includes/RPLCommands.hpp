@@ -53,9 +53,11 @@
 
 #define ERR_NONICKNAMEGIVEN "431 :No nickname given\n"
 
-#define ERR_NICKNAMEINUSE(nick) (nick + " :Nickname is already in use\n")
+#define ERR_NICKNAMEINUSE(nick) ("433 " + nick + " :Nickname is already in use\n")
 
 #define ERR_ERRONEUSNICKNAME(nick) "432" + nick + " :Erroneus nickname\n"
+
+#define ERR_NICKCOLLISION(nick) ("436 " + nick + " :Nickname collision KILL\n")
 
 #define ERR_NOTONCHANNEL(nick, channel) ("442 " + nick + " " + channel + " :You're not on that channel\n")
 

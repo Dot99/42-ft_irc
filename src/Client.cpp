@@ -57,29 +57,42 @@ void Client::removeClient(int client_fd)
 void Client::handleChannelMessage(int client_fd, const std::string restOfCommand)
 {
 	std::string Name, message, msg;
-	size_t spacePos, msgPos, hashPos;
-	
+	size_t msgPos, hashPos;
+	int isCHannel = 0;
+
+	std::cout << "Rest of command: " << restOfCommand << std::endl;
 	hashPos = restOfCommand.find("#");
-	if (hashPos == std::string::npos)
-		return;
-	spacePos = restOfCommand.find(" ");
-	if (spacePos == std::string::npos)
-		return;
-	Name = restOfCommand.substr(0, spacePos);
+	if (hashPos != std::string::npos)
+		isCHannel = 1;
+	
+	std::cout << "Boss_taLikida123" << std::endl;
 	msgPos = restOfCommand.find(":");
 	if (msgPos == std::string::npos || msgPos + 1 >= restOfCommand.size())
 		return;
+	Name = restOfCommand.substr(0, msgPos);
 	message = restOfCommand.substr(msgPos + 1);
     if (message.empty() || !_channel){
-        return;
+		return;
 	}
+
+	std::cout << "Name: " << Name << std::endl;
+	std::cout << "Message: " << message << std::endl;
 	msg = ":" + getNick() + " PRIVMSG " + Name + " :" + message + "\r\n";
-    std::vector<Client *> users = _channel->getUsers();
-    for (size_t i = 0; i < users.size(); i++)
-    {
-        if (users[i]->getFd() != client_fd)
-            sendClientMsg(users[i]->getFd(), msg.c_str());
-    }
+	if (isCHannel)
+	{
+		std::vector<Client *> users = _channel->getUsers();
+		for (size_t i = 0; i < users.size(); i++)
+		{
+			if (users[i]->getFd() != client_fd)
+				sendClientMsg(users[i]->getFd(), msg.c_str());
+		}
+	}
+	else
+	{
+		Client *user = _server.getUserByNick(Name);
+		if (user)
+			sendClientMsg(user->getFd(), msg.c_str());
+	}
 }
 
 /**

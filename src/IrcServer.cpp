@@ -504,7 +504,7 @@ void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 {
 	if (_user->getAuthenticated() == true)
 	{
-		sendClientMsg(client_fd, ERR_ALREADYREGISTRED);
+		// sendClientMsg(client_fd, ERR_ALREADYREGISTRED);
 	}
 	else if(restOfCommand != _pwd)
 	{
@@ -636,7 +636,7 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 		{
 			foundCommand = commands[i];
 			restOfCommand = command.substr(pos + commands[i].length());
-			if (foundCommand != "INVITE" &&  foundCommand != "USER" && foundCommand != "PRIVMSG")
+			if (foundCommand != "INVITE" &&  foundCommand != "USER")
 				restOfCommand = clean_input(restOfCommand, SPACES);
 			else
 				restOfCommand = clean_input(restOfCommand, ENTER);
@@ -677,6 +677,7 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 			break;
 		case 10:
 			userCommand(client_fd, restOfCommand);
+			break;
 		case 11:
 			_user->handleChannelMessage(client_fd, restOfCommand);
 			break;
