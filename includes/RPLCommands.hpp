@@ -57,7 +57,7 @@
 
 #define ERR_NONICKNAMEGIVEN "431 :No nickname given\n"
 
-#define ERR_NICKNAMEINUSE(nick) ("433 " + nick + " :Nickname is already in use\n")
+#define ERR_NICKNAMEINUSE(nick) (": 433 " + nick + " :Nickname is already in use\r\n")
 
 #define ERR_ERRONEUSNICKNAME(nick) "432" + nick + " :Erroneus nickname\n"
 

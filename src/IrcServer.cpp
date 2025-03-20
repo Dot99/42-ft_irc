@@ -133,9 +133,11 @@ void IrcServer::run()
 					newPoll.revents = 0;
 					_poll_fds.push_back(newPoll);
 					//_users.back()->validateUser(client_fd);
-					std::string server = SERVER_NAME;
 					if (!_users.back()->getNick().empty() && !_users.back()->getUser().empty() && _users.back()->getAuthenticated())
-						sendClientMsg(client_fd, RPL_WELCOME(_users.back()->getNick(), server));
+					{
+						sendClientMsg(client_fd, RPL_WELCOME(_users.back()->getNick(), SERVER_NAME));
+						_users.back()->setWelcomeSent(true);
+					}
 				}
 				else
 				{
@@ -212,7 +214,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 	
 	iss >> channelName >> passwd;
 	bool channelExists = false;
-	std::string msg;
+	std::string msg;\
 	if(channelName.empty())
 	{
 		send(client_fd, "Invalid channel\n", 16, 0);
@@ -501,7 +503,7 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 			switch (i)
 			{
 				case 0: //i (Set/remove Invite-only channel)
-					_user->getChannel()->setInviteOnly(true);
+					// _user->getChannel()->setInviteOnly(true);
 					break;
 				case 1: //t (Set/remove the restrictions of the TOPIC command to channel operators)
 					//TODO:handle "t"
@@ -548,7 +550,8 @@ void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 */
 int IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 {
-	std::string msg = checkNick(restOfCommand, _users);
+	std::string inputNick = clean_input(restOfCommand, ENTER);
+	std::string msg = checkNick(inputNick, _users);
 	if (!msg.empty())
 	{
 		sendClientMsg(client_fd, msg);
@@ -556,7 +559,9 @@ int IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 	}
 	else
 	{
-		_user->setNick(restOfCommand);
+		_user->setNick(inputNick);
+		if (!_user->getWelcomeSent())
+			sendClientMsg(client_fd, RPL_WELCOME(_user->getNick(), SERVER_NAME));
 		return (0);
 	}
 	return (0);
@@ -643,34 +648,6 @@ void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
 	}
 }
 
-void IrcServer::parseAuthenticate(int client_fd, std::string parameter)
-{
-	std::string parameters[3] = {"PASS", "NICK", "USER"};
-	int i = 0;
-	std::string foundParameter;
-	std::string restOfParameter;
-	_user = getUserFd(client_fd);
-	for(; i < 3; i++)
-	{
-		size_t pos = parameter.find(parameters[i]);
-		if(pos != std::string::npos)
-		{
-			foundParameter = parameters[i];
-			restOfParameter = parameter.substr(pos + parameters[i].length());
-			restOfParameter = clean_input(restOfParameter, SPACES);
-			break;
-		}
-	}
-	switch(i)
-	{
-
-			break;
-		// default:
-		// 	sendClientMsg(client_fd, ERR_UNKNOWNCOMMAND);
-		// 	break;
-	}
-}
-
 void IrcServer::parseCommand(int client_fd, std::string command)
 {
 	std::string commands[14] = {"JOIN", "PART", "LIST", "EXIT", "KICK",  "INVITE", "TOPIC", "MODE","PASS", "NICK", "USER", "PRIVMSG", "QUIT", "WHO"};
@@ -678,6 +655,15 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 	std::string foundCommand;
 	std::string restOfCommand;
 	_user = getUserFd(client_fd);
+	std::cout << "Users data:" << std::endl;
+	for (size_t i = 0; i < _users.size(); i++)
+	{
+		std::cout << "Nick: " << _users[i]->getNick() << std::endl;
+		std::cout << "User: " << _users[i]->getUser() << std::endl;
+		std::cout << "Real Name: " << _users[i]->getRealName() << std::endl;
+		if (_users[i]->getChannel())
+			std::cout << "Channel: " << _users[i]->getChannel()->getName() << std::endl;
+	}
 	for(; i < 14; i++)
 	{
 		size_t pos = command.find(commands[i]);
@@ -685,7 +671,7 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 		{
 			foundCommand = commands[i];
 			restOfCommand = command.substr(pos + commands[i].length());
-			if (foundCommand != "INVITE" &&  foundCommand != "USER" && foundCommand != "PART")
+			if (foundCommand != "INVITE" &&  foundCommand != "USER" && foundCommand != "PART" && foundCommand != "PRIVMSG")
 				restOfCommand = clean_input(restOfCommand, SPACES);
 			else
 				restOfCommand = clean_input(restOfCommand, ENTER);

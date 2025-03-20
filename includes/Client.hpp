@@ -23,6 +23,7 @@ class Client
 		std::string _user;
 		std::string _host;
 		std::string _real_name;
+		bool _welcome_sent;
 		bool _isAuthenticated;
 		bool _isOperator;
 		struct sockaddr_in _client_adrr;
@@ -46,6 +47,8 @@ class Client
 		void setHost(std::string host);
 		void setFd(int fd);
 		void setChannel(Channel *channel);
+		void setWelcomeSent(bool welcome_sent);
+		bool getWelcomeSent();
 		std::string getNick();
 		std::string getUser();
 		bool getAuthenticated();
