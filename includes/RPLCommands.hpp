@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:50:27 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 08:50:00 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 11:27:30 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,12 +24,16 @@
 
 
 /*-------Channel replies------ */
+#define RPL_ENDOFWHO(mask) ("315 " + mask + " :End of WHO list\n")
+
 #define RPL_LIST "322"
 #define RPL_LISTEND "323"
 
 #define RPL_TOPIC(nick, channel, topic) (":" + SERVER_NAME + " 332 " + nick + " " + channel + " :" + topic + "\r\n")
 
 #define RPL_TOPICWHOTIME "333"
+
+#define RPL_WHOREPLY(nick, channel, user, host, realname) ("325" + nick + " " + channel + " " + user + " " + host + " " + SERVER_NAME + " " + realname + " H :0 " + realname + "\r\n")
 
 #define RPL_NAMREPLY(nick, channel, users) (": 353 " + nick + " = " + channel + " :" + users + "\n")
 
@@ -66,5 +70,9 @@
 #define ERR_ALREADYREGISTRED "462 :You may not reregister\n"
 
 #define ERR_PASSWDMISMATCH "464 :Password incorrect\n"
+
+#define ERR_UNKNOWNMODE(mode) ("472 " + mode + " :is unknown mode char to me\n")
+
+#define ERR_CHANNOPRIVSNEEDED(channel) ("482 " + channel + " :You're not channel operator\n")
 /*-----------------------------*/
 

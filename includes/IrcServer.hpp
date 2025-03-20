@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 10:34:13 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 09:18:07 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 10:20:55 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,6 @@ class IrcServer
 		int _port;
 		int _socket;
 		std::string _pwd;
-		std::string _server_name;
 		std::string _now;
 		struct sockaddr_in _server_addr;
 		std::vector<struct pollfd> _poll_fds;
@@ -55,8 +54,10 @@ class IrcServer
 		void whoCommand(int client_fd, std::string restOfCommand);
 		void parseAuthenticate(int client_fd, std::string paremeter);
 		//-----------------GETTERS/SETTERS-----------------//
-		int getSock() const;
 		void setArgs(const std::string args[]);
+		void setPollFds(int i, int fd, short int revents); 
+		void setPwd(std::string pwd);
+		int getSock() const;
 		std::string getPwd() const;
 		struct pollfd &getPollFds(int i);
 		std::vector<Channel *> getChannels() const;
@@ -64,6 +65,4 @@ class IrcServer
 		Channel * getChannelByName(std::string name);
 		Client * getUserByNick(std::string nick);
 		Client * getUserFd(int fd);
-		void setPollFds(int i, int fd, short int revents); 
-		void setPwd(std::string pwd);
 };
