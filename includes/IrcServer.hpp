@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 10:34:13 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 10:20:55 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 16:48:13 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,6 @@ class IrcServer
 		void userCommand(int client_fd, std::string restOfCommand);
 		void quitCommand(int client_fd, std::string restOfCommand);
 		void whoCommand(int client_fd, std::string restOfCommand);
-		void parseAuthenticate(int client_fd, std::string paremeter);
 		//-----------------GETTERS/SETTERS-----------------//
 		void setArgs(const std::string args[]);
 		void setPollFds(int i, int fd, short int revents); 

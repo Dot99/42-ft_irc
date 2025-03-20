@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 15:55:59 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 17:06:45 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -268,6 +268,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 		_channels[_channels.size() - 1]->addUser(_user);
 		_user->setChannel(_channels[_channels.size() - 1]);
 		_user->setOperator(true);
+		std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +o " + _user->getNick() + "\r\n";
 		if (channel->getTopic().empty())
 			channel->setTopic("General");
 	}
@@ -362,10 +363,9 @@ void IrcServer::listCommand(int client_fd, std::string restOfCommand)
 
 void IrcServer::exitCommand(int client_fd)
 {
-	(void)client_fd;
 	_user->getChannel()->removeUser(_user);
 	_user->setChannel(NULL);
-	//TODO: Close connection with the client
+	close(client_fd);
 }
 
 void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
@@ -443,19 +443,42 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 
 void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 {
-	if(_user->getOperator() == false)
+	if(_user->getOperator() == false || _user->getChannel() == NULL || _user->getChannel()->getTopicProtection())
 	{
-		send(client_fd, "Not allowed", 11, 0);
+		sendClientMsg(client_fd, ERR_CHANNOPRIVSNEEDED(_user->getChannel()->getName()));
 		return ;
 	}
 	std::string inputTopic = restOfCommand;
 	if(inputTopic.empty())
 	{
-		//TODO: Show to op the topic of the channel
+		if(_user->getChannel()->getTopic().empty())
+			sendClientMsg(client_fd, RPL_NOTOPIC(_user->getChannel()->getName()));
+		else
+		{
+			sendClientMsg(client_fd, RPL_TOPIC(_user->getNick(), _user->getChannel()->getName(), _user->getChannel()->getTopic()));
+			sendClientMsg(client_fd, RPL_TOPICWHOTIME(_user->getChannel()->getName(), _user->getNick(), _user->getChannel()->getTopicTime()));
+		}
 	}
 	else
 	{
-		//TODO: Change topic of the channel
+		_user->getChannel()->setTopic(inputTopic);
+		std::time_t now = std::time(0);
+		std::tm *ltm = std::localtime(&now);
+		std::stringstream ss;
+		ss << 1900 + ltm->tm_year << "-"
+			<< 1 + ltm->tm_mon << "-"
+			<< ltm->tm_mday << " "
+			<< ltm->tm_hour << ":"
+			<< ltm->tm_min << ":"
+			<< ltm->tm_sec;
+		std::string tnow = ss.str();
+		_user->getChannel()->setTopicTime(tnow);
+		std::vector<Client *> users = _user->getChannel()->getUsers();
+		for (size_t i = 0; i < users.size(); i++)
+		{
+			std::string msg = ":" + _user->getNick() + "!" + _user->getUser() + "@" + _user->getHost() + " TOPIC " + _user->getChannel()->getName() + " :" + inputTopic + "\r\n";
+			sendClientMsg(users[i]->getFd(), msg);
+		}
 	}
 }
 
@@ -591,14 +614,18 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 										else
 										{
 											if(inputMode[0] == '+')
+											{
 												getUserByNick(parameter)->setOperator(true);
+												std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +o " + parameter + "\r\n";
+												sendClientMsg(client_fd, msg);
+											}
 											else
 												getUserByNick(parameter)->setOperator(false);
 										}
 									}
 									break;
 								case 4: //l (Set/remove the user limit to channel)
-									if (parameter.empty())
+									if (parameter.empty() && inputMode[0] == '+')
 									{
 										sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
 										return ;
@@ -620,7 +647,6 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 			}
 		}
 		//TODO: PRINT MESSAGES AFTER SETING MODE
-		//TODO: Change mode of the channel
 	}
 }
 

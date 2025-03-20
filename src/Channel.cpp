@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/18 16:28:29 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 14:54:33 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 17:01:33 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -230,6 +230,26 @@ std::string Channel::getPassword() const
 std::string Channel::getTopic() const
 {
 	return _topic;
+}
+
+/**
+ * @brief Set the topic time of the channel
+ * 
+ * @param topic_time Topic time
+*/
+void Channel::setTopicTime(std::string topic_time)
+{
+	_topic_time = topic_time;
+}	
+
+/**
+ * @brief Get the topic time of the channel
+ * 
+ * @return std::string Topic time
+*/
+std::string Channel::getTopicTime() const
+{
+	return _topic_time;
 }
 
 /**

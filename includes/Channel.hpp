@@ -8,6 +8,7 @@ class Channel
 		std::string _password;
 		std::string _topic;
 		std::string _mode;
+		std::string _topic_time;
 		bool _inviteOnly;
 		bool _topicProtection;
 		size_t _limit;
@@ -29,11 +30,13 @@ class Channel
 		void setInviteOnly(bool inviteOnly);
 		void setLimit(int limit);
 		void setTopicProtection(bool topicProtection);
+		void setTopicTime(std::string topic_time);
 		size_t getLimit() const;
 		std::string getPassword() const;
 		std::string getTopic() const;
 		std::string getMode() const;
 		bool getTopicProtection() const;
+		std::string getTopicTime() const;
 		bool getInviteOnly() const;
         std::string getName() const;
         std::vector<Client *> getUsers() const;
