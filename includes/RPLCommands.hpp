@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:50:27 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/18 16:26:59 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 08:50:00 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,8 @@
 #define ERR_NICKNAMEINUSE(nick) (nick + " :Nickname is already in use\n")
 
 #define ERR_ERRONEUSNICKNAME(nick) "432" + nick + " :Erroneus nickname\n"
+
+#define ERR_NOTONCHANNEL(nick, channel) ("442 " + nick + " " + channel + " :You're not on that channel\n")
 
 #define ERR_NEEDMOREPARAMS(command) ("461 " + command + " :Not enough parameters\n")
 

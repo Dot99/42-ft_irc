@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/18 16:36:32 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 09:30:15 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -294,15 +294,36 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
  * @brief Command to leave a channel
  * @param client_fd File descriptor of the client
 */
-void IrcServer::leaveCommand(int client_fd)
+void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 {
-	if (_user->getChannel())
+	std::istringstream iss(restOfCommand);
+	std::string channelName;
+	std::string reason;
+
+	iss >> channelName >> reason;
+	if(channelName.empty() && _user->getChannel() == NULL)
+	{
+		std::string msg = "PART";
+		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
+		return ;
+	}
+	if(channelName.empty() && _user->getChannel() != NULL)
 	{
 		_user->getChannel()->removeUser(_user);
 		_user->setChannel(NULL);
 	}
-	else
-		send(client_fd, "You are not in a channel\n", 25, 0);
+	if (!getChannelByName(channelName))
+	{
+		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
+		return ;
+	}
+	if (_user->getChannel()->getName() != channelName)
+	{
+		sendClientMsg(client_fd, ERR_NOTONCHANNEL(_user->getNick(), channelName));
+		return ;
+	}
+	_user->getChannel()->removeUser(_user);
+	_user->setChannel(NULL);
 }
 
 /**
@@ -539,6 +560,40 @@ void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 	}
 }
 
+void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
+{
+	//TODO: Send msg to channel/s saying user left with QUIT
+	sendClientMsg(client_fd, "ERROR :Closing Link: (Quit: " + restOfCommand + ")");
+	close(client_fd);
+}
+
+void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
+{
+	(void)client_fd;
+	if (restOfCommand.empty())
+	{
+		//LIST ALL USERS ON SERVER
+		return ;
+	}
+	//Check if restofCommand contains #
+	size_t pos = restOfCommand.find("#");
+	if (pos == std::string::npos)
+	{
+		//LIST USER INFO
+	}
+	else
+	{
+		if(getChannelByName(restOfCommand))
+		{
+			//LIST ALL USERS ON CHANNEL
+		}
+		else
+		{
+			// RPL_ENDOFWHO (315) 
+		}
+	}
+}
+
 void IrcServer::parseAuthenticate(int client_fd, std::string parameter)
 {
 	std::string parameters[3] = {"PASS", "NICK", "USER"};
@@ -569,12 +624,12 @@ void IrcServer::parseAuthenticate(int client_fd, std::string parameter)
 
 void IrcServer::parseCommand(int client_fd, std::string command)
 {
-	std::string commands[12] = {"JOIN", "LEAVE", "LIST", "EXIT", "KICK",  "INVITE", "TOPIC", "MODE","PASS", "NICK", "USER", "PRIVMSG"};
+	std::string commands[14] = {"JOIN", "PART", "LIST", "EXIT", "KICK",  "INVITE", "TOPIC", "MODE","PASS", "NICK", "USER", "PRIVMSG", "QUIT", "WHO"};
 	int i = 0;
 	std::string foundCommand;
 	std::string restOfCommand;
 	_user = getUserFd(client_fd);
-	for(; i < 12; i++)
+	for(; i < 14; i++)
 	{
 		size_t pos = command.find(commands[i]);
 		if(pos != std::string::npos)
@@ -594,7 +649,7 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 			joinCommand(client_fd, restOfCommand);
 			break;
 		case 1:
-			leaveCommand(client_fd);
+			partCommand(client_fd, restOfCommand);
 			break;
 		case 2:
 			listCommand(client_fd, restOfCommand);
@@ -625,6 +680,15 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 		case 11:
 			_user->handleChannelMessage(client_fd, restOfCommand);
 			break;
+		case 12:
+			quitCommand(client_fd, restOfCommand);
+			break;
+		case 13:
+			whoCommand(client_fd, restOfCommand);
+			break;
+		default:
+			std::cout << "Unknown command" << std::endl;
+			//TODO:: Unknown command
 	}
 }
 

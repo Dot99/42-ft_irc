@@ -6,11 +6,12 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 10:26:42 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/18 16:35:27 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 08:25:34 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Utils.hpp"
+
 IrcServer *server = NULL;
 
 void signalHandler(int signum)

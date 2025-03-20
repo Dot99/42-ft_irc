@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 10:34:13 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/18 16:29:16 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 09:18:07 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ class IrcServer
 		void run();
 
 		//-----------------COMMANDS-----------------//
-		void leaveCommand(int client_fd);
+		void partCommand(int client_fd, std::string restOfCommand);
 		void exitCommand(int client_fd);
 		int nickCommand(int client_fd, std::string restOfCommand);
 		void joinCommand(int client_fd, std::string restOfCommand);
@@ -51,6 +51,8 @@ class IrcServer
 		void parseCommand(int client_fd, std::string command);
 		void passCommand(int client_fd, std::string restOfCommand);
 		void userCommand(int client_fd, std::string restOfCommand);
+		void quitCommand(int client_fd, std::string restOfCommand);
+		void whoCommand(int client_fd, std::string restOfCommand);
 		void parseAuthenticate(int client_fd, std::string paremeter);
 		//-----------------GETTERS/SETTERS-----------------//
 		int getSock() const;
