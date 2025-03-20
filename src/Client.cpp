@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/18 16:37:56 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 10:24:34 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,6 +160,7 @@ int Client::acceptClient(int client_fd)
 		// close(_server.getSock());
 		return(-1);
 	}
+	setHost(std::string(inet_ntoa(_client_adrr.sin_addr)));
 	setFd(client_fd);
 	std::string input = readLine(client_fd, 512);
 	if(input.empty())
@@ -326,4 +327,44 @@ void Client::setOperator(bool op)
 bool Client::getOperator()
 {
 	return (_isOperator);
+}
+
+/**
+ * @brief Set the Host object
+ * 
+ * @param host Host
+*/
+void Client::setHost(std::string host)
+{
+	_host = host;
+}
+
+/**
+ * @brief Get the Host object
+ * 
+ * @return std::string Host
+*/
+std::string Client::getHost()
+{
+	return _host;
+}
+
+/**
+ * @brief Set the Real Name object
+ * 
+ * @param real_name Real Name
+*/
+void Client::setRealName(std::string real_name)
+{
+	_real_name = real_name;
+}
+
+/**
+ * @brief Get the Real Name object
+ * 
+ * @return std::string Real Name
+*/
+std::string Client::getRealName()
+{
+	return _real_name;
 }
