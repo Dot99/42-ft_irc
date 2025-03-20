@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/18 16:28:29 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 08:27:52 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 14:54:33 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,9 @@
 Channel::Channel(std::string name)
 {
     _name = name;
+	_inviteOnly = false;
+	_topicProtection = false;
+	_limit = 0;
 }
 
 /**
@@ -162,6 +165,16 @@ void Channel::setLimit(int limit)
 }
 
 /**
+ * @brief Set the channel topic protection
+ * 
+ * @param topicProtection Topic protection
+ */
+void Channel::setTopicProtection(bool topicProtection)
+{
+	_topicProtection = topicProtection;
+}
+
+/**
  * @brief Get the Invited User object
  * 
  * @param fd File descriptor
@@ -227,6 +240,16 @@ std::string Channel::getTopic() const
 bool Channel::getInviteOnly() const
 {
 	return _inviteOnly;
+}
+
+/**
+ * @brief Get the topic protection of the channel
+ * 
+ * @return bool Topic protection
+*/
+bool Channel::getTopicProtection() const
+{
+	return _topicProtection;
 }
 
 /**

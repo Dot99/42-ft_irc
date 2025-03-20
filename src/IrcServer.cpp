@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 12:32:11 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 15:55:59 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -230,7 +230,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 				send(client_fd, "Channel is invite only\n", 24, 0);
 				break;
 			}
-			if (_channels[i]->getLimit() && _channels[i]->getUsers().size() >= _channels[i]->getLimit())
+			if (_channels[i]->getLimit() > 0 && _channels[i]->getUsers().size() >= _channels[i]->getLimit())
 			{
 				send(client_fd, "Channel is full\n", 16, 0);
 				break;
@@ -462,10 +462,16 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 {
 	std::string mode = "itkol";
+	std::istringstream iss(restOfCommand);
+	std::string target;
+	std::string inputMode;
+	std::string parameter;
+	std::string msg = "MODE";
+	iss >> target >> inputMode >> parameter;
 	if(_user->getOperator() == false)
 	{
 		size_t pos = restOfCommand.find("#");
-		if(pos == std::string::npos)
+		if(pos == std::string::npos || !inputMode.empty())
 		{
 			sendClientMsg(client_fd, ERR_CHANNOPRIVSNEEDED(restOfCommand));
 			return ;
@@ -486,40 +492,131 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 			}
 		}
 	}
-	else
+	else // If user operator
 	{
-		if (!restOfCommand[0])
-			send(client_fd, "Invalid mode\n", 13, 0);
-		char inputMode = restOfCommand[0];
-		std::string parameter = restOfCommand.substr(1);
-		if (parameter.empty() && inputMode != 'i' && inputMode != 't')
-			send(client_fd, "Invalid parameter\n", 18, 0);
+		restOfCommand = clean_input(restOfCommand, ENTER);
+		if(restOfCommand.empty())
+		{
+			std::string msg = "MODE";
+			sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
+			return ;
+		}
 		else
 		{
-			int i = 0;
-			for(; i < 5; i++)
-				if (inputMode == mode[i])
-					break;
-			switch (i)
+			if (target != _user->getChannel()->getName())
 			{
-				case 0: //i (Set/remove Invite-only channel)
-					// _user->getChannel()->setInviteOnly(true);
-					break;
-				case 1: //t (Set/remove the restrictions of the TOPIC command to channel operators)
-					//TODO:handle "t"
-					break;
-				case 2: //k (Set/remove the channel key)
-					_user->getChannel()->setPassword(parameter);
-					break;
-				case 3: //o (Give/take channel operator privileges)
-					getUserByNick(parameter)->setOperator(true);
-					break;
-				case 4: //l (Set the user limit to channel)
-					_user->getChannel()->setLimit(std::atoi(parameter.c_str()));
-					break;
-				default:
-					send(client_fd, "Invalid mode\n", 13, 0);
-					break;
+				if(getChannelByName(_user->getChannel()->getName()))
+				{
+					sendClientMsg(client_fd, ERR_CHANNOPRIVSNEEDED(_user->getChannel()->getName()));
+					return ;
+				}
+				else
+				{
+					sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(_user->getChannel()->getName()));
+					return ;
+				}
+			}
+			else
+			{
+				if(inputMode.empty() && !target.empty())
+				{
+					sendClientMsg(client_fd, RPL_CHANNELMODEIS(_user->getChannel()->getName(), "+-", mode));
+					return ;
+				}
+				if (inputMode.empty())
+				{
+					sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
+					return ;
+				}
+				else
+				{
+					if (inputMode[0] != '+' && inputMode[0] != '-')
+					{
+						std::string signal = "+-";
+						sendClientMsg(client_fd, RPL_CHANNELMODEIS(_user->getChannel()->getName(), signal, mode));
+						return ;
+					}
+					else
+					{
+						if (inputMode[1] != 'i' && inputMode[1] != 't' && inputMode[1] != 'k' && inputMode[1] != 'o' && inputMode[1] != 'l')
+						{
+							sendClientMsg(client_fd, ERR_UNKNOWNMODE(inputMode));
+							return ;
+						}
+						else
+						{
+							int i = 0;
+							for(; i < 5; i++)
+								if (inputMode[1] == mode[i])
+									break;
+							switch (i)
+							{
+								case 0: //i (Set/remove Invite-only channel)
+									if(inputMode[0] == '+')
+										_user->getChannel()->setInviteOnly(true);
+									else
+										_user->getChannel()->setInviteOnly(false);
+									break;
+								case 1: //t (Set/remove the restrictions of the TOPIC command to channel operators)
+									if(inputMode[0] == '+')
+										_user->getChannel()->setTopicProtection(true);
+									else
+										_user->getChannel()->setTopicProtection(false);
+									break;
+								case 2: //k (Set/remove the channel key)
+									if (parameter.empty() && inputMode[0] == '+')
+									{
+										sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
+										return ;
+									}
+									else
+										if(inputMode[0] == '+')
+											_user->getChannel()->setPassword(parameter);
+										else
+											_user->getChannel()->setPassword("");
+									break;
+								case 3: //o (Set/remove a user as channel operator)
+									if (parameter.empty())
+									{
+										sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
+										return ;
+									}
+									else
+									{
+										if(getUserByNick(parameter) == NULL)
+										{
+											sendClientMsg(client_fd, ERR_NOSUCHNICK(parameter));
+											return ;
+										}
+										else
+										{
+											if(inputMode[0] == '+')
+												getUserByNick(parameter)->setOperator(true);
+											else
+												getUserByNick(parameter)->setOperator(false);
+										}
+									}
+									break;
+								case 4: //l (Set/remove the user limit to channel)
+									if (parameter.empty())
+									{
+										sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
+										return ;
+									}
+									else
+									{
+										if(inputMode[0] == '+')
+											_user->getChannel()->setLimit(std::atoi(parameter.c_str()));
+										else
+											_user->getChannel()->setLimit(0);
+									}
+									break;
+							default:
+								break;
+							}
+						}
+					}
+				}
 			}
 		}
 		//TODO: PRINT MESSAGES AFTER SETING MODE
@@ -577,18 +674,18 @@ void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 	
 	iss >> user >> zero >> asterisk >> realName;
 	std::string inputUser = restOfCommand;
-	if(inputUser.empty())
+	if(user.empty())
 	{
 		std::string user = "USER";
 		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(user));	
 	}
-	else
-	{
+	else if (user.length() < USERLEN)
 		_user->setUser(user);
-		_user->setRealName(realName);
-		if (!_user->getNick().empty())
-			sendClientMsg(client_fd, "CAP * LS");
-	}
+	else
+		_user->setUser(user.substr(0, USERLEN));
+	_user->setRealName(realName);
+	if (!_user->getNick().empty())
+		sendClientMsg(client_fd, "CAP * LS");
 }
 
 void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
@@ -655,15 +752,6 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 	std::string foundCommand;
 	std::string restOfCommand;
 	_user = getUserFd(client_fd);
-	std::cout << "Users data:" << std::endl;
-	for (size_t i = 0; i < _users.size(); i++)
-	{
-		std::cout << "Nick: " << _users[i]->getNick() << std::endl;
-		std::cout << "User: " << _users[i]->getUser() << std::endl;
-		std::cout << "Real Name: " << _users[i]->getRealName() << std::endl;
-		if (_users[i]->getChannel())
-			std::cout << "Channel: " << _users[i]->getChannel()->getName() << std::endl;
-	}
 	for(; i < 14; i++)
 	{
 		size_t pos = command.find(commands[i]);
@@ -671,7 +759,7 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 		{
 			foundCommand = commands[i];
 			restOfCommand = command.substr(pos + commands[i].length());
-			if (foundCommand != "INVITE" &&  foundCommand != "USER" && foundCommand != "PART" && foundCommand != "PRIVMSG")
+			if (foundCommand != "INVITE" &&  foundCommand != "USER" && foundCommand != "PART" && foundCommand != "MODE" && foundCommand != "PRIVMSG")
 				restOfCommand = clean_input(restOfCommand, SPACES);
 			else
 				restOfCommand = clean_input(restOfCommand, ENTER);
