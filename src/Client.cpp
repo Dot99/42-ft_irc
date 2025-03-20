@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 10:24:34 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 16:49:50 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,23 +115,6 @@ void Client::handleClientMessage(int client_fd)
 	}
 	buffer[bytes_received] = '\0';
 	_server.parseCommand(client_fd, buffer);
-	// TODO: Parse and process IRC commands here
-	/*
-		Check if there is a command sent by client
-		if command is NICK
-			Check if nickname is already in use
-			If not
-				Set nickname
-				Send welcome message
-			Else
-				Send error message
-		Else if command is JOIN
-			Check if channel exists
-			If not
-				Create channel
-			Join channel
-	*/
-	
 }
 
 /**
@@ -170,7 +153,7 @@ int Client::acceptClient(int client_fd)
 	if(client_fd < 0)
 	{
 		std::cerr << "Error: Client connection failed" << std::endl;
-		// close(_server.getSock());
+		//TODO: close(_server.getSock());
 		return(-1);
 	}
 	setHost(std::string(inet_ntoa(_client_adrr.sin_addr)));
@@ -193,8 +176,7 @@ void Client::validateUser(int client_fd, std::string input)
 	{
 		std::string command = "PASS";
 		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(command));
-		//Close connection 
-		//TODO: Make function to close connection client_fd
+		close(client_fd);
 	}
 	else
 	{
@@ -206,7 +188,7 @@ void Client::validateUser(int client_fd, std::string input)
 		{
 			std::string command = "USER";
 			sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(command));
-			//Close connection
+			close(client_fd);
 		}
 		else
 			_server.parseCommand(client_fd, input);

@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:50:27 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 14:28:51 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/20 16:56:39 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,9 +31,11 @@
 
 #define RPL_CHANNELMODEIS(channel, mode, params) ("324 " + channel + " " + mode + " " + params + "\n")
 
+#define RPL_NOTOPIC(channel) ("331 " + channel + " :No topic is set\n")
+
 #define RPL_TOPIC(nick, channel, topic) (":" + SERVER_NAME + " 332 " + nick + " " + channel + " :" + topic + "\r\n")
 
-#define RPL_TOPICWHOTIME "333"
+#define RPL_TOPICWHOTIME(channel, nick, time) (":" + SERVER_NAME + " 333 " + nick + " " + channel + " " + time + "\r\n")
 
 #define RPL_WHOREPLY(nick, channel, user, host, realname) ("325" + nick + " " + channel + " " + user + " " + host + " " + SERVER_NAME + " " + realname + " H :0 " + realname + "\r\n")
 
@@ -47,6 +49,7 @@
 #define RPL_MOTDSTART "375"
 #define RPL_MOTD "372"
 #define RPL_ENDOFMOTD "376"
+
 /*-----------------------------*/
 
 
