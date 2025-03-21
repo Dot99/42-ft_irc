@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 11:30:21 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/21 16:12:29 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,7 +126,11 @@ std::string readLine(int client_fd, unsigned long max_length) {
 void sendClientMsg(int client_fd, std::string msg)
 {
 	if (send(client_fd, msg.c_str(), msg.length(), 0) == -1)
+	{
 		std::cerr << "Error sending response" << std::endl;
+		throw std::exception();
+	}
+	std::cout << "Sent to client[" << client_fd << "]: " << msg;
 }
 
 std::string clean_input(std::string input, int what )
@@ -179,24 +183,32 @@ bool wildcardMatch(const std::string &str, const std::string &pattern)
 	return patternIndex == pattern.size();
 }
 
-std::string checkNick(const std::string& nick, std::vector<Client *> users)
+std::string checkNick(const std::string& nick, std::vector<Client *> &users)
 {
-    if (nick.empty())
-        return ERR_NONICKNAMEGIVEN;
-    if (isdigit(nick[0]))
-        return ERR_ERRONEUSNICKNAME(nick);
-    
-    for (size_t i = 0; i < nick.length(); i++)
-    {
-        char c = nick[i];
-        if (!isalnum(c) && c != '[' && c != ']' && c != '{' && c != '}' && c != '\\' && c != '|' && c != '_')
-            return ERR_ERRONEUSNICKNAME(nick);
-    }
+	if (nick.empty())
+		return ERR_NONICKNAMEGIVEN;
+	if (isdigit(nick[0]))
+		return ERR_ERRONEUSNICKNAME(nick);
+	
+	for (size_t i = 0; i < nick.length(); i++)
+	{
+		char c = nick[i];
+		if (!isalnum(c) && c != '[' && c != ']' && c != '{' && c != '}' && c != '\\' && c != '|' && c != '_')
+			return ERR_ERRONEUSNICKNAME(nick);
+	}
+
+	// Convert input nick to lowercase
+	std::string lowercaseNick = nick;
+	std::transform(lowercaseNick.begin(), lowercaseNick.end(), lowercaseNick.begin(), ::tolower);
+
 	for (size_t i = 0; i < users.size(); i++)
 	{
-		if (users[i]->getNick() == nick)
+		std::string existingNick = users[i]->getNick();
+		std::transform(existingNick.begin(), existingNick.end(), existingNick.begin(), ::tolower);
+
+		if (existingNick == lowercaseNick)
 			return ERR_NICKNAMEINUSE(nick);
 	}
-	
-    return "";
+
+	return "";
 }

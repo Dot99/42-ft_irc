@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 16:49:50 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/21 13:51:10 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,6 @@ void Client::handleChannelMessage(int client_fd, const std::string restOfCommand
 		std::vector<Client *> users = _channel->getUsers();
 		for (size_t i = 0; i < users.size(); i++)
 		{
-			std::cout << "user[" << i << "]: " << users[i]->getNick() << std::endl;
 			if (users[i]->getFd() != client_fd)
 				sendClientMsg(users[i]->getFd(), msg.c_str());
 		}

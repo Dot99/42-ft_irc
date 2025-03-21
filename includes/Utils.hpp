@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/07 08:57:34 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 14:56:08 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/21 16:13:23 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 #include <map>
 #include <sstream>
 #include <vector>
+#include <algorithm>
 #include <signal.h>
 #include <functional>
 #include <csignal>
@@ -46,4 +47,4 @@ std::string readLine(int client_fd, unsigned long max_length);
 void sendClientMsg(int client_fd, std::string msg);
 std::string clean_input(std::string input, int what );
 bool wildcardMatch(const std::string &str, const std::string &pattern);
-std::string checkNick(const std::string& nick, std::vector<Client *> users);
+std::string checkNick(const std::string& nick, std::vector<Client *> &users);
