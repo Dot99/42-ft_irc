@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/21 17:06:00 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/24 15:07:51 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -265,23 +265,24 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
     }
 	if (_user->getChannel())
 	{
-		std::string msg = ":" + _user->getNick() + "!" + _user->getUser() + "@" + _user->getHost() + " JOIN :" + _user->getChannel()->getName() + "\r\n";
+		//std::string msg = ":" + _user->getNick() + " JOIN " + _user->getChannel()->getName() + "\r\n";
 		std::vector<Client *> users = _user->getChannel()->getUsers();
 		for (size_t i = 0; i < users.size(); ++i)
-    		sendClientMsg(users[i]->getFd(), msg);
-		sendClientMsg(client_fd, RPL_TOPIC(_user->getNick(), _user->getChannel()->getName(), _user->getChannel()->getTopic()));
+			sendClientMsg(users[i]->getFd(), RPL_JOIN(_user->getNick(), _user->getChannel()->getName()));
 		
 		std::string user_list;
 		for (size_t i = 0; i < users.size(); ++i)
 		{
 			if(users[i]->getOperator())
-				user_list += "@";
+			user_list += "@";
 			user_list += users[i]->getNick();
 			if (i + 1 != users.size())
-				user_list += " ";
+			user_list += " ";
 		}
         sendClientMsg(client_fd, RPL_NAMREPLY(_user->getNick(), _user->getChannel()->getName(), user_list));
         sendClientMsg(client_fd, RPL_ENDOFNAMES(_user->getNick(), _user->getChannel()->getName()));
+		if(_user->getChannel()->getTopic() != " ")
+			sendClientMsg(client_fd, RPL_TOPIC(_user->getNick(), _user->getChannel()->getName(), _user->getChannel()->getTopic()));
 	}
 }
 
@@ -756,55 +757,81 @@ void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 
 void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
 {
-	std::string msg;
-	if (restOfCommand.empty())
+	std::istringstream iss(restOfCommand);
+	std::string command, channel;
+	iss >> command >> channel;
+
+	if(channel.empty() || channel[0] != '#')
 	{
-		for (size_t i = 0; i < _users.size(); i++)
-		{
-			msg = RPL_WHOREPLY(_users[i]->getNick(), _users[i]->getChannel()->getName(), _users[i]->getUser(), _users[i]->getHost(), _users[i]->getRealName());
-			sendClientMsg(client_fd, msg);
-		}
-		msg = RPL_ENDOFWHO(restOfCommand);
-		sendClientMsg(client_fd, msg);
+		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channel));
 		return ;
 	}
-	size_t pos = restOfCommand.find("#");
-	if (pos != std::string::npos)
+	if(!getChannelByName(channel))
 	{
-		for (size_t i = 0; i < _users.size(); i++)
-		{
-			if(_users[i]->getNick() == restOfCommand)
-			{
-				msg = RPL_WHOREPLY(_users[i]->getNick(), _users[i]->getChannel()->getName(), _users[i]->getUser(), _users[i]->getHost(), _users[i]->getRealName());
-				sendClientMsg(client_fd, msg);
-				break;
-			}
-		}
-		msg = RPL_ENDOFWHO(restOfCommand);
+		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channel));
+		return;
+	}
+	for(size_t i = 0; i < getChannelByName(channel)->getUsers().size(); i++)
+	{
+		std::string flag = " H";
+		if (getChannelByName(channel)->getUsers()[i]->getOperator())
+			flag += " @";
+		std::string msg = RPL_WHOREPLY(getChannelByName(channel)->getUsers()[i]->getNick(), getChannelByName(channel)->getUsers()[i]->getHost(), 
+		getChannelByName(channel)->getUsers()[i]->getChannel()->getName(), 
+		getChannelByName(channel)->getUsers()[i]->getUser(), getChannelByName(channel)->getUsers()[i]->getRealName(), flag);
 		sendClientMsg(client_fd, msg);
-		return ;
 	}
-	else
-	{
-		if(getChannelByName(restOfCommand))
-		{
-			//LIST ALL USERS ON CHANNEL
-			std::vector<Client *> users = getChannelByName(restOfCommand)->getUsers();
-			for (size_t i = 0; i < users.size(); i++)
-			{
-				msg = RPL_WHOREPLY(users[i]->getNick(), users[i]->getChannel()->getName(), users[i]->getUser(), users[i]->getHost(), users[i]->getRealName());
-				sendClientMsg(client_fd, msg);
-			}
-			msg = RPL_ENDOFWHO(restOfCommand);
-			sendClientMsg(client_fd, msg);
-		}
-		else
-		{
-			msg = RPL_ENDOFWHO(restOfCommand);
-			sendClientMsg(client_fd, msg);
-			return ;
-		}
-	}
+	sendClientMsg(client_fd, RPL_ENDOFWHO(_user->getNick(), channel));
+
+	// std::string msg;
+	// if (restOfCommand.empty())
+	// {
+	// 	for (size_t i = 0; i < _users.size(); i++)
+	// 	{
+	// 		msg = RPL_WHOREPLY(_users[i]->getNick(), _users[i]->getChannel()->getName(), _users[i]->getUser(), _users[i]->getHost(), _users[i]->getRealName());
+	// 		sendClientMsg(client_fd, msg);
+	// 	}
+	// 	msg = RPL_ENDOFWHO(restOfCommand);
+	// 	sendClientMsg(client_fd, msg);
+	// 	return ;
+	// }
+	// size_t pos = restOfCommand.find("#");
+	// if (pos == std::string::npos)
+	// {
+	// 	for (size_t i = 0; i < _users.size(); i++)
+	// 	{
+	// 		if(_users[i]->getNick() == restOfCommand)
+	// 		{
+	// 			msg = RPL_WHOREPLY(_users[i]->getNick(), _users[i]->getChannel()->getName(), _users[i]->getUser(), _users[i]->getHost(), _users[i]->getRealName());
+	// 			sendClientMsg(client_fd, msg);
+	// 			break;
+	// 		}
+	// 	}
+	// 	msg = RPL_ENDOFWHO(restOfCommand);
+	// 	sendClientMsg(client_fd, msg);
+	// 	return ;
+	// }
+	// else
+	// {
+	// 	if(getChannelByName(restOfCommand))
+	// 	{
+	// 		//LIST ALL USERS ON CHANNEL
+	// 		std::vector<Client *> users = getChannelByName(restOfCommand)->getUsers();
+	// 		for (size_t i = 0; i < users.size(); i++)
+	// 		{
+	// 			msg = RPL_WHOREPLY(users[i]->getNick(), users[i]->getChannel()->getName(), users[i]->getUser(), users[i]->getHost(), users[i]->getRealName());
+	// 			sendClientMsg(client_fd, msg);
+	// 		}
+	// 		msg = RPL_ENDOFWHO(restOfCommand);
+	// 		sendClientMsg(client_fd, msg);
+	// 	}
+	// 	else
+	// 	{
+	// 		msg = RPL_ENDOFWHO(restOfCommand);
+	// 		sendClientMsg(client_fd, msg);
+	// 		return ;
+	// 	}
+	// }
 }
 
 void IrcServer::parseCommand(int client_fd, std::string command)
@@ -823,7 +850,7 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 			foundCommand = commands[i];
 			restOfCommand = command.substr(pos + commands[i].length());
 			if (foundCommand != "INVITE" &&  foundCommand != "USER" && foundCommand != "PART" && foundCommand != "MODE" && foundCommand != "PRIVMSG"
-				&& foundCommand != "TOPIC")
+				&& foundCommand != "TOPIC" && foundCommand != "WHO")
 				restOfCommand = clean_input(restOfCommand, SPACES);
 			else
 				restOfCommand = clean_input(restOfCommand, ENTER);
