@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:50:27 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/24 15:07:20 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/24 16:30:09 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,13 +23,14 @@
 /*-----------------------------*/
 
 
-#define RPL_JOIN(nick, channel) (":" + nick + " JOIN " + channel + "\n")
+#define RPL_JOIN(nick, channel) (":" + nick + " JOIN " + channel + "\r\n")
 
 /*-------Channel replies------ */
 #define RPL_ENDOFWHO(nick, mask) (":315 " + nick + " " + mask + " :End of WHO list\r\n")
 
-#define RPL_LIST "322"
-#define RPL_LISTEND "323"
+#define RPL_LISTSTART(channel, user, name) ("321 " + channel + "Users " + name + "\r\n")
+#define RPL_LIST "322\r\n"
+#define RPL_LISTEND "323\r\n"
 
 #define RPL_CHANNELMODEIS(channel, mode, params) ("324 " + channel + " " + mode + " " + params + "\n")
 

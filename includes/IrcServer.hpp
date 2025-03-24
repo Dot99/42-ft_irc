@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 10:34:13 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 16:48:13 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/24 16:02:38 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ class IrcServer
 		//-----------------COMMANDS-----------------//
 		void partCommand(int client_fd, std::string restOfCommand);
 		void exitCommand(int client_fd);
-		int nickCommand(int client_fd, std::string restOfCommand);
+		void nickCommand(int client_fd, std::string restOfCommand);
 		void joinCommand(int client_fd, std::string restOfCommand);
 		void listCommand(int client_fd, std::string restOfCommand);
 		void kickCommand(int client_fd, std::string restOfCommand);
