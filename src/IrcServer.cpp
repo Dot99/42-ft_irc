@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/26 10:04:33 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/26 11:50:57 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,7 +122,7 @@ void IrcServer::run()
 					if (client_fd < 0)
 					{
 						std::cerr << "Error accepting client" << std::endl;
-						throw std::exception();
+						break;
 					}
 					struct pollfd newPoll;
 					newPoll.fd = client_fd;
@@ -258,6 +258,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
     }
     else if (!channelExists) // Create new channel
     {
+		std::cout << "channelName[" << channelName << "]" << std::endl;
         channel = new Channel(channelName);
         addChannel(channel);
         channel->addUser(_user);
@@ -501,27 +502,14 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 	iss >> target >> inputMode >> parameter;
 	if(_user->getOperator() == false)
 	{
-		size_t pos = restOfCommand.find("#");
+		size_t pos = target.find("#");
 		if(pos == std::string::npos || !inputMode.empty())
 		{
 			sendClientMsg(client_fd, ERR_CHANNOPRIVSNEEDED(restOfCommand));
 			return ;
 		}
 		else
-		{
-			std::string channelName = restOfCommand.substr(pos);
-			if(channelName.find(' ') != std::string::npos)
-			{
-				while(channelName.find(' ') != std::string::npos)
-					channelName = channelName.substr(channelName.find(' ') + 1);
-				sendClientMsg(client_fd, ERR_UNKNOWNMODE(channelName));
-			}
-			else
-			{				
-				sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
-				return ;
-			}
-		}
+			sendClientMsg(client_fd, RPL_CHANNELMODEIS(_user->getChannel()->getName(), "+-", mode));
 	}
 	else // If user operator
 	{
@@ -606,7 +594,7 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 									else
 									{
 										_user->getChannel()->setTopicProtection(false);
-										std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +t \r\n";
+										std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " -t \r\n";
 										sendClientMsg(client_fd, msg);
 									}
 									break;
@@ -626,7 +614,7 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 										else
 										{
 											_user->getChannel()->setPassword("");
-											std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +k " + parameter + "\r\n";
+											std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " -k " + parameter + "\r\n";
 											sendClientMsg(client_fd, msg);
 										}
 									break;
@@ -688,7 +676,6 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 				}
 			}
 		}
-		//TODO: PRINT MESSAGES AFTER SETING MODE
 	}
 }
 
@@ -830,6 +817,8 @@ void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
 
 void IrcServer::parseCommand(int client_fd, std::string command)
 {
+	if(command == "\r\n")
+		return ;
 	std::string commands[14] = {"JOIN", "PART", "LIST", "EXIT", "KICK",  "INVITE", "TOPIC", "MODE", "PASS", "NICK", "USER", "PRIVMSG", "QUIT", "WHO"};
 	int i = 0;
 	std::string foundCommand;
@@ -844,7 +833,7 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 			foundCommand = commands[i];
 			restOfCommand = command.substr(pos + commands[i].length());
 			if (foundCommand != "INVITE" &&  foundCommand != "USER" && foundCommand != "PART" && foundCommand != "MODE" && foundCommand != "PRIVMSG"
-				&& foundCommand != "TOPIC" && foundCommand != "WHO")
+				&& foundCommand != "TOPIC" && foundCommand != "WHO" && foundCommand != "JOIN")
 				restOfCommand = clean_input(restOfCommand, SPACES);
 			else
 				restOfCommand = clean_input(restOfCommand, ENTER);
