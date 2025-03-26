@@ -376,17 +376,22 @@ void IrcServer::exitCommand(int client_fd)
 
 void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 {
+	std::istringstream iss(restOfCommand);
+	std::string channelName;
+	std::string inputNick;
+	std::string message;
+	std::string msg;
+	iss >> channelName >> inputNick >> message;
 	if(_user->getOperator() == false)
 	{
 		send(client_fd, "Not allowed", 11, 0);
 		return ;
 	}
-	std::string inputNick = restOfCommand;
 	if(inputNick.empty())
 	{
 		send(client_fd, "Invalid nickname\n", 17, 0);
 	}
-	if(_user->getChannel())
+	if(_user->getChannel()->getName() == channelName)
 	{
 		for (size_t i = 0; i < _user->getChannel()->getUsers().size(); i++)
 		{
@@ -395,7 +400,14 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 				_user->getChannel()->getUsers()[i]->setOperator(false);
 				_user->getChannel()->getUsers()[i]->setChannel(NULL);
 				_user->getChannel()->removeInvitedUser(_user->getChannel()->getUsers()[i]);
-				send(_user->getChannel()->getUsers()[i]->getFd(), "You have been kicked from your channel\n", 39, 0);
+				if (message.empty())
+					msg = ":" + _user->getNick() + " KICK " + channelName + " " + inputNick + "\r\n";
+				else
+					msg = ":" + _user->getNick() + " KICK " + channelName + " " + inputNick + " :" + message + "\r\n";
+				for (size_t j = 0; j < _user->getChannel()->getUsers().size(); j++)
+				{
+					sendClientMsg(_user->getChannel()->getUsers()[j]->getFd(), msg);
+				}
 				_user->getChannel()->removeUser(_user->getChannel()->getUsers()[i]);
 				break;
 			}
@@ -824,7 +836,6 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 	std::string foundCommand;
 	std::string restOfCommand;
 	_user = getUserFd(client_fd);
-	std::cout << "Client: " << _user->getNick() << "-> Command: " << command << std::endl;
 	for(; i < 14; i++)
 	{
 		size_t pos = command.find(commands[i]);
@@ -833,7 +844,7 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 			foundCommand = commands[i];
 			restOfCommand = command.substr(pos + commands[i].length());
 			if (foundCommand != "INVITE" &&  foundCommand != "USER" && foundCommand != "PART" && foundCommand != "MODE" && foundCommand != "PRIVMSG"
-				&& foundCommand != "TOPIC" && foundCommand != "WHO" && foundCommand != "JOIN")
+				&& foundCommand != "TOPIC" && foundCommand != "WHO" && foundCommand != "KICK" && foundCommand != "JOIN")
 				restOfCommand = clean_input(restOfCommand, SPACES);
 			else
 				restOfCommand = clean_input(restOfCommand, ENTER);
