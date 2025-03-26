@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:50:27 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/24 16:30:09 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/26 17:13:55 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,11 +19,12 @@
 
 #define RPL_CREATED(date) ("003 :This server was created " + date + "\n")
 
-#define RPL_MYINFO(server, version) ("004 " + server + " " + version + " :Available user modes: io, channel modes: tkl\n")
+#define RPL_MYINFO(server, nick, version) (server + " 004 " + nick + " " + version + " :Available user modes: io, channel modes: tkl\r\n")
 /*-----------------------------*/
 
 
-#define RPL_JOIN(nick, channel) (":" + nick + " JOIN " + channel + "\r\n")
+#define RPL_JOIN(nick, user,host, channel) (":" + nick + "!" + user + "@" + host + " JOIN " + channel + "\r\n")
+
 
 /*-------Channel replies------ */
 #define RPL_ENDOFWHO(nick, mask) (":315 " + nick + " " + mask + " :End of WHO list\r\n")
@@ -40,18 +41,20 @@
 
 #define RPL_TOPICWHOTIME(channel, nick, time) (":" + SERVER_NAME + " 333 " + nick + " " + channel + " " + time + "\r\n")
 
+#define RPL_INVITING(nick, channel) (": 341" + nick + " " + channel + "\r\n")
+
 #define RPL_WHOREPLY(nickname, host,  channelname, user, realname, flag) (":" + host + " 352 " + nickname + " " + channelname + " " + host + " " + SERVER_NAME + " " + user + " " + flag + " :2 " + realname + "\r\n")
 
-#define RPL_NAMREPLY(nick, channel, users) (": 353 " + nick + " = " + channel + " :" + users + "\n")
+#define RPL_NAMREPLY(nick, channel, users) (":localhost 353 " + nick + " = " + channel + " :" + users + "\r\n")
 
-#define RPL_ENDOFNAMES(nickname, channel) (": 366 " + nickname + " " + channel + " :End of NAMES list" + "\r\n")
+#define RPL_ENDOFNAMES(nickname, channel) (":localhost 366 " + nickname + " " + channel + " :End of /NAMES list\r\n")
 /*-----------------------------*/
 
 
 /*-------Miscellaneous---------*/
-#define RPL_MOTDSTART "375"
-#define RPL_MOTD "372"
-#define RPL_ENDOFMOTD "376"
+#define RPL_MOTDSTART(nick) "375 " + nick + " :- " + SERVER_NAME + " Message of the day - \r\n" 
+#define RPL_MOTD(nick) "372 " + nick + ":- HEYOO\r\n"
+#define RPL_ENDOFMOTD(nick) "376 " + nick + ":End of /MOTD command.\r\n"
 
 /*-----------------------------*/
 
@@ -65,13 +68,15 @@
 
 #define ERR_NONICKNAMEGIVEN "431 :No nickname given\n"
 
-#define ERR_NICKNAMEINUSE(nick) (": 433 " + nick + " :Nickname is already in use\r\n")
+#define ERR_NICKNAMEINUSE(nick) (": 433 * " + nick + " :Nickname is already in use\r\n")
 
 #define ERR_ERRONEUSNICKNAME(nick) "432" + nick + " :Erroneus nickname\n"
 
 #define ERR_NICKCOLLISION(nick) ("436 " + nick + " :Nickname collision KILL\n")
 
 #define ERR_NOTONCHANNEL(nick, channel) ("442 " + nick + " " + channel + " :You're not on that channel\n")
+
+#define ERR_USERONCHANNEL(nick, channel) ("443 " + nick + " " + channel + " :is already on channel\n")
 
 #define ERR_NEEDMOREPARAMS(command) ("461 " + command + " :Not enough parameters\n")
 
@@ -81,6 +86,6 @@
 
 #define ERR_UNKNOWNMODE(mode) ("472 " + mode + " :is unknown mode char to me\n")
 
-#define ERR_CHANNOPRIVSNEEDED(channel) ("482 " + channel + " :You're not channel operator\n")
+#define ERR_CHANOPRIVSNEEDED(channel) ("482 " + channel + " :You're not channel operator\n")
 /*-----------------------------*/
 
