@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/24 16:52:48 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/26 10:04:33 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
  * 
  * @param args Arguments
  */
-IrcServer::IrcServer(const std::string args[])
+IrcServer::IrcServer(const std::vector<std::string> &args)
 {
 	setArgs(args);
 	startServer();
@@ -34,11 +34,14 @@ IrcServer::~IrcServer()
 	{
 		delete _users[i];
 	}
+	_users.clear();
 	for (size_t i = 0; i < _channels.size(); i++)
 	{
 		delete _channels[i];
 	}
-	_poll_fds.clear();
+	_channels.clear();
+	std::vector<pollfd>().swap(_poll_fds);
+	_now.clear();
 }
 
 /**
@@ -147,7 +150,7 @@ void IrcServer::run()
  * 
  * @param args Arguments
  */
-void IrcServer::setArgs(const std::string args[])
+void IrcServer::setArgs(const std::vector<std::string> &args)
 {
 	std::istringstream iss(args[1]);
 	if (!(iss >> _port))
@@ -587,7 +590,11 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 										sendClientMsg(client_fd, msg);
 									}
 									else
+									{
 										_user->getChannel()->setInviteOnly(false);
+										std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " -i \r\n";
+										sendClientMsg(client_fd, msg);
+									}
 									break;
 								case 1: //t (Set/remove the restrictions of the TOPIC command to channel operators)
 									if(inputMode[0] == '+')
@@ -597,7 +604,11 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 										sendClientMsg(client_fd, msg);
 									}
 									else
+									{
 										_user->getChannel()->setTopicProtection(false);
+										std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +t \r\n";
+										sendClientMsg(client_fd, msg);
+									}
 									break;
 								case 2: //k (Set/remove the channel key)
 									if (parameter.empty() && inputMode[0] == '+')
@@ -613,7 +624,11 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 											sendClientMsg(client_fd, msg);
 										}
 										else
+										{
 											_user->getChannel()->setPassword("");
+											std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +k " + parameter + "\r\n";
+											sendClientMsg(client_fd, msg);
+										}
 									break;
 								case 3: //o (Set/remove a user as channel operator)
 									if (parameter.empty())
@@ -760,7 +775,27 @@ void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 {
 	//TODO: Send msg to channel/s saying user left with QUIT
-	sendClientMsg(client_fd, "ERROR :Closing Link: (Quit: " + restOfCommand + ")");
+	if(_user->getChannel())
+	{
+		std::string channelName = _user->getChannel()->getName();
+		std::vector<Client *> users = _user->getChannel()->getUsers();
+		for (size_t i = 0; i < users.size(); i++)
+			sendClientMsg(users[i]->getFd(), _user->getNick() + " is leaving the channel" + _user->getChannel()->getName() + "\n");
+		std::string msg = ":" + _user->getNick() + "!" + _user->getUser() + "@" + _user->getHost() + " PART " + _user->getChannel()->getName();
+		if(!restOfCommand.empty())
+			msg += " :" + restOfCommand + "\r\n";
+		else
+			msg += "\r\n";
+		sendClientMsg(_user->getFd(), msg);
+		_user->getChannel()->removeUser(_user);
+		_user->setChannel(NULL);
+		if(getChannelByName(channelName)->getUsers().empty())
+			delete getChannelByName(channelName);
+	}
+	if(restOfCommand.empty())
+		sendClientMsg(client_fd, "ERROR :Closing Link: (Quit: )");
+	else
+		sendClientMsg(client_fd, "ERROR :Closing Link: (Quit: " + restOfCommand + ")");
 	close(client_fd);
 }
 

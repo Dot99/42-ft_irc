@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/21 16:12:29 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/26 09:52:41 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,13 +38,11 @@ bool isNumber(std::string str)
  * @return true If the arguments are invalid
  * @return false If the arguments are valid
 */
-bool checkArgs(int argc, char **argv, std::string args[])
+bool checkArgs(int argc, char **argv, std::vector<std::string> &args)
 {
+	args.clear();
 	for(int i = 0; i < argc; i++)
-	{
-		args[i] = argv[i];
-		//std::cout << "args[" << i << "]: " << args[i] << std::endl;
-	}
+		args.push_back(argv[i]);
 	if(argc != 3)
 	{
 		std::cout << "Error: Invalid number of arguments" << std::endl;
@@ -70,13 +68,29 @@ bool checkArgs(int argc, char **argv, std::string args[])
 		std::cout << "Usage: ./ircserv [port] [password]" << std::endl;
 		return (true);
 	}
-	if(args[1].size() == 0)
+	if(args[2].size() == 0)
 	{
 		std::cout << "Error: Invalid password" << std::endl;
 		std::cout << "Usage: ./ircserv [port] [password]" << std::endl;
 		return (true);
 	}
 	return (false);
+}
+
+/**
+ * @brief Sanitizes the input by removing invalid control char
+ * 
+ * @param input Raw input string
+ * @return std::string Sanitized input string with control characters removed
+*/
+std::string sanitizeInput(std::string input) {
+	std::string sanitized;
+	for (size_t i = 0; i < input.size(); i++) {
+		if (isprint(input[i]) || input[i] == '\t' || input[i] == '\n' || input[i] == '\r') {
+			sanitized += input[i];
+		}
+	}
+	return sanitized;
 }
 
 /**
@@ -97,7 +111,6 @@ std::string readLine(int client_fd, unsigned long max_length) {
 			char next_char;
 			int peeked_bytes = recv(client_fd, &next_char, 1, MSG_PEEK);
 			if (peeked_bytes > 0 && next_char == '\n') {
-				// Consume the '\n' character
 				recv(client_fd, &next_char, 1, 0);
 			}
 			break;
@@ -105,6 +118,8 @@ std::string readLine(int client_fd, unsigned long max_length) {
 		else if (c == '\n') {
 			break;
 		}
+		if(iscntrl(c) && c != '\t')
+			continue;
 		if (!too_long) {
 			if (input.size() < max_length )
 				input += c;
@@ -120,7 +135,7 @@ std::string readLine(int client_fd, unsigned long max_length) {
 		return "";  // Return empty string to indicate an error
 	}
 
-	return input;
+	return sanitizeInput(input);
 }
 
 void sendClientMsg(int client_fd, std::string msg)
