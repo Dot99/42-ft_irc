@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/27 14:39:54 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/27 15:36:36 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -241,17 +241,17 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 		// Check invite-only and password conditions
 		if (channel->getInviteOnly() && !_user->getOperator() && !channel->getInvitedUser(client_fd))
 		{
-			send(client_fd, "Channel is invite only\n", 24, 0);
+			sendClientMsg(client_fd, ERR_INVITEONLYCHAN(channelName));
 			return;
 		}
 		if (channel->getLimit() > 0 && channel->getUsers().size() >= channel->getLimit())
 		{
-			send(client_fd, "Channel is full\n", 16, 0);
+			sendClientMsg(client_fd, ERR_CHANNELISFULL(channelName));
 			return;
 		}
 		if (!channel->getPassword().empty() && channel->getPassword() != passwd)
 		{
-			send(client_fd, "Channel has password\n", 21, 0);
+			sendClientMsg(client_fd, ERR_PASSWDMISMATCH);
 			return;
 		}
 
@@ -349,14 +349,16 @@ void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 */
 void IrcServer::listCommand(int client_fd, std::string restOfCommand)
 {
-	sendClientMsg(client_fd, RPL_LIST);
+	sendClientMsg(client_fd, RPL_LISTSTART);
+	std::string msg;
+	std::string clientCount;
 	if(restOfCommand.empty())
 	{
 		for (size_t i = 0; i < _channels.size(); i++)
 		{
-			send(client_fd, "Channel: ", 9, 0);
-			send(client_fd, _channels[i]->getName().c_str(), _channels[i]->getName().length(), 0);
-			send(client_fd, "\n", 1, 0);
+			clientCount = std::to_string(_channels[i]->getUsers().size());
+			msg = RPL_LIST(_channels[i]->getName(), clientCount, _channels[i]->getTopic());
+			sendClientMsg(client_fd, msg);	
 		}
 	}
 	else
@@ -365,9 +367,9 @@ void IrcServer::listCommand(int client_fd, std::string restOfCommand)
 		{
 			if (wildcardMatch(_channels[i]->getName(), restOfCommand))
 			{
-				send(client_fd, "Channel: ", 9, 0);
-				send(client_fd, _channels[i]->getName().c_str(), _channels[i]->getName().length(), 0);
-				send(client_fd, "\n", 1, 0);
+				clientCount = std::to_string(_channels[i]->getUsers().size());
+				msg = RPL_LIST(_channels[i]->getName(), clientCount, _channels[i]->getTopic());
+				sendClientMsg(client_fd, msg);	
 			}
 		}
 	}
@@ -391,13 +393,11 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 	iss >> channelName >> inputNick >> message;
 	if(_user->getOperator() == false)
 	{
-		send(client_fd, "Not allowed", 11, 0);
+		sendClientMsg(client_fd, ERR_CHANOPRIVSNEEDED(channelName));
 		return ;
 	}
 	if(inputNick.empty())
-	{
-		send(client_fd, "Invalid nickname\n", 17, 0);
-	}
+		sendClientMsg(client_fd, ERR_NONICKNAMEGIVEN);
 	if(_user->getChannel()->getName() == channelName)
 	{
 		for (size_t i = 0; i < _user->getChannel()->getUsers().size(); i++)
@@ -421,7 +421,7 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 		}
 	}
 	else
-		send(client_fd, "No user found\n", 14, 0);
+		sendClientMsg(client_fd, ERR_NOTONCHANNEL(_user->getNick(), channelName));
 }
 
 void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)

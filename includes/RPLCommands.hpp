@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:50:27 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/27 14:33:46 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/27 15:31:04 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,8 +29,8 @@
 /*-------Channel replies------ */
 #define RPL_ENDOFWHO(nick, mask) (nick + " 315 " + mask + " :End of /WHO list\r\n")
 
-#define RPL_LISTSTART(channel, user, name) ("321 " + channel + "Users " + name + "\r\n")
-#define RPL_LIST "322\r\n"
+#define RPL_LISTSTART "321 Channel :Users Name\r\n"
+#define RPL_LIST(channel, clientcount, topic) ("322 " + channel + " " + clientcount + " :" + topic + "\r\n")
 #define RPL_LISTEND "323\r\n"
 
 #define RPL_CHANNELMODEIS(channel, mode, params) ("324 " + channel + " " + mode + " " + params + "\n")
@@ -86,7 +86,11 @@
 
 #define ERR_PASSWDMISMATCH "464 :Password incorrect\n"
 
+#define ERR_CHANNELISFULL(channel) ("471 " + channel + " :Cannot join channel (+l)\n")
+
 #define ERR_UNKNOWNMODE(mode) ("472 " + mode + " :is unknown mode char to me\n")
+
+#define ERR_INVITEONLYCHAN(channel) ("473 " + channel + " :Cannot join channel (+i)\r\n")
 
 #define ERR_CHANOPRIVSNEEDED(channel) ("482 " + channel + " :You're not channel operator\n")
 /*-----------------------------*/
