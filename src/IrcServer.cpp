@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/26 17:00:44 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/27 14:21:49 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -239,37 +239,37 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 		}
 	}
 	if (channelExists && _user->getChannel() == NULL)
-    {
-        // Check invite-only and password conditions
-        if (channel->getInviteOnly() && !_user->getOperator() && !channel->getInvitedUser(client_fd))
-        {
-            send(client_fd, "Channel is invite only\n", 24, 0);
-            return;
-        }
-        if (channel->getLimit() > 0 && channel->getUsers().size() >= channel->getLimit())
-        {
-            send(client_fd, "Channel is full\n", 16, 0);
-            return;
-        }
-        if (!channel->getPassword().empty() && channel->getPassword() != passwd)
-        {
-            send(client_fd, "Channel has password\n", 21, 0);
-            return;
-        }
+	{
+		// Check invite-only and password conditions
+		if (channel->getInviteOnly() && !_user->getOperator() && !channel->getInvitedUser(client_fd))
+		{
+			send(client_fd, "Channel is invite only\n", 24, 0);
+			return;
+		}
+		if (channel->getLimit() > 0 && channel->getUsers().size() >= channel->getLimit())
+		{
+			send(client_fd, "Channel is full\n", 16, 0);
+			return;
+		}
+		if (!channel->getPassword().empty() && channel->getPassword() != passwd)
+		{
+			send(client_fd, "Channel has password\n", 21, 0);
+			return;
+		}
 
-        // Add user to channel
-        channel->addUser(_user);
-        _user->setChannel(channel);
-    }
-    else if (!channelExists) // Create new channel
-    {
-        channel = new Channel(channelName);
-        addChannel(channel);
-        channel->addUser(_user);
-        _user->setChannel(channel);
-        _user->setOperator(true);
+		// Add user to channel
+		channel->addUser(_user);
+		_user->setChannel(channel);
+	}
+	else if (!channelExists) // Create new channel
+	{
+		channel = new Channel(channelName);
+		addChannel(channel);
+		channel->addUser(_user);
+		_user->setChannel(channel);
+		_user->setOperator(true);
 		channel->setTopic("general");
-    }
+	}
 	if (_user->getChannel())
 	{
 		std::vector<Client *> users = _user->getChannel()->getUsers();
@@ -291,8 +291,8 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 		}
 		sendClientMsg(client_fd, RPL_TOPIC2(_user->getNick(), _user->getChannel()->getName(), _user->getChannel()->getTopic()));
 		// sendClientMsg(client_fd, RPL_TOPIC(_user->getChannel()->getName(), _user->getChannel()->getTopic()));
-        sendClientMsg(client_fd, RPL_NAMREPLY(_user->getNick(), _user->getChannel()->getName(), user_list));
-        // sendClientMsg(client_fd, RPL_ENDOFNAMES(_user->getChannel()->getName()));
+		sendClientMsg(client_fd, RPL_NAMREPLY(_user->getNick(), _user->getChannel()->getName(), user_list));
+		// sendClientMsg(client_fd, RPL_ENDOFNAMES(_user->getChannel()->getName()));
 	}
 }
 
@@ -729,11 +729,11 @@ void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 {
 	_user = getUserFd(client_fd);
-    if (!_user) 
-    {
-        std::cout << "Error: User not found" << std::endl;
-        return ;
-    }
+	if (!_user) 
+	{
+		std::cout << "Error: User not found" << std::endl;
+		return ;
+	}
 	std::string inputNick = clean_input(restOfCommand, ENTER);
 	std::string msg = checkNick(inputNick, _users);
 	if (!msg.empty())
@@ -790,6 +790,8 @@ void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 		_user->setUser(user);
 	else
 		_user->setUser(user.substr(0, USERLEN));
+	if(realName[0] == ':')
+		realName = realName.substr(1);
 	_user->setRealName(realName);
 	if (!_user->getNick().empty())
 		sendClientMsg(client_fd, "CAP * LS\r\n");
@@ -849,12 +851,19 @@ void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
 	}
 	for(size_t i = 0; i < getChannelByName(channel)->getUsers().size(); i++)
 	{
-		std::string flag = " H";
+		std::string flag = "H";
 		if (getChannelByName(channel)->getUsers()[i]->getOperator())
 			flag += " @";
-		std::string msg = RPL_WHOREPLY(getChannelByName(channel)->getUsers()[i]->getNick(), getChannelByName(channel)->getUsers()[i]->getHost(), 
-		getChannelByName(channel)->getUsers()[i]->getChannel()->getName(), 
-		getChannelByName(channel)->getUsers()[i]->getUser(), getChannelByName(channel)->getUsers()[i]->getRealName(), flag);
+		std::string msg = RPL_WHOREPLY(
+			SERVER_NAME,
+			getChannelByName(channel)->getUsers()[i]->getNick(),// client (the one issuing WHO)
+			getChannelByName(channel)->getName(),               // channel
+			getChannelByName(channel)->getUsers()[i]->getUser(), // username
+			getChannelByName(channel)->getUsers()[i]->getHost(), // host
+			getChannelByName(channel)->getUsers()[i]->getNick(), // nick
+			flag,                                               // flags
+			getChannelByName(channel)->getUsers()[i]->getRealName() // realname
+		);
 		sendClientMsg(client_fd, msg);
 	}
 	sendClientMsg(client_fd, RPL_ENDOFWHO(_user->getNick(), channel));

@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:50:27 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/26 17:13:55 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/27 14:33:46 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@
 
 
 /*-------Channel replies------ */
-#define RPL_ENDOFWHO(nick, mask) (":315 " + nick + " " + mask + " :End of WHO list\r\n")
+#define RPL_ENDOFWHO(nick, mask) (nick + " 315 " + mask + " :End of /WHO list\r\n")
 
 #define RPL_LISTSTART(channel, user, name) ("321 " + channel + "Users " + name + "\r\n")
 #define RPL_LIST "322\r\n"
@@ -45,7 +45,7 @@
 
 #define RPL_INVITING(nick, channel) (": 341" + nick + " " + channel + "\r\n")
 
-#define RPL_WHOREPLY(nickname, host,  channelname, user, realname, flag) (":" + host + " 352 " + nickname + " " + channelname + " " + host + " " + SERVER_NAME + " " + user + " " + flag + " :2 " + realname + "\r\n")
+#define RPL_WHOREPLY(server, client, channel, user, host, nick, flags, realname) (server + " 352 " + client + " " + channel + " " + user + " " + host + " " + server + " " + nick + " " + flags + " :0 " + realname + "\r\n")
 
 #define RPL_NAMREPLY(nick, channel, users) (": 353 " + nick + " = " + channel + " :" + users + "\r\n")
 
