@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/27 14:21:49 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/27 14:39:54 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -224,8 +224,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 	iss >> channelName >> passwd;
 	if(channelName.empty())
 	{
-		//TODO: CHANGE MSG
-		send(client_fd, "Invalid channel\n", 16, 0);
+		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
 		return ;
 	}
 	// Check if channel exists
