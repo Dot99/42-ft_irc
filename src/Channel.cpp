@@ -31,6 +31,24 @@ Channel::Channel(std::string name)
  */
 Channel::~Channel()
 {
+	for (size_t i = 0; i < _users.size(); i++)
+	{
+		if(_users[i])
+			delete _users[i];
+	}
+	_users.clear();
+	for (size_t i = 0; i < _operators.size(); i++)
+	{
+		if(_operators[i])
+			delete _operators[i];
+	}
+	_operators.clear();
+	for (size_t i = 0; i < _invitedUsers.size(); i++)
+	{
+		if(_invitedUsers[i])
+			delete _invitedUsers[i];
+	}
+	_invitedUsers.clear();
 }
 
 /**
