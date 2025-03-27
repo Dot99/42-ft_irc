@@ -268,6 +268,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
         channel->addUser(_user);
         _user->setChannel(channel);
         _user->setOperator(true);
+		channel->setTopic("general");
     }
 	if (_user->getChannel())
 	{
@@ -288,10 +289,10 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 			if (i + 1 != users.size())
 				user_list += " ";
 		}
+		sendClientMsg(client_fd, RPL_TOPIC2(_user->getNick(), _user->getChannel()->getName(), _user->getChannel()->getTopic()));
+		// sendClientMsg(client_fd, RPL_TOPIC(_user->getChannel()->getName(), _user->getChannel()->getTopic()));
         sendClientMsg(client_fd, RPL_NAMREPLY(_user->getNick(), _user->getChannel()->getName(), user_list));
-        sendClientMsg(client_fd, RPL_ENDOFNAMES(_user->getNick(), _user->getChannel()->getName()));
-		if(!_user->getChannel()->getTopic().empty())
-			sendClientMsg(client_fd, RPL_TOPIC(_user->getNick(), _user->getChannel()->getName(), _user->getChannel()->getTopic()));
+        // sendClientMsg(client_fd, RPL_ENDOFNAMES(_user->getChannel()->getName()));
 	}
 }
 
@@ -488,7 +489,7 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 			sendClientMsg(client_fd, RPL_NOTOPIC(_user->getChannel()->getName()));
 		else
 		{
-			sendClientMsg(client_fd, RPL_TOPIC(_user->getNick(), _user->getChannel()->getName(), _user->getChannel()->getTopic()));
+			sendClientMsg(client_fd, RPL_TOPIC(_user->getChannel()->getName(), _user->getChannel()->getTopic()));
 			sendClientMsg(client_fd, RPL_TOPICWHOTIME(_user->getChannel()->getName(), _user->getNick(), _user->getChannel()->getTopicTime()));
 		}
 	}
@@ -733,13 +734,16 @@ void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
         std::cout << "Error: User not found" << std::endl;
         return ;
     }
-
 	std::string inputNick = clean_input(restOfCommand, ENTER);
 	std::string msg = checkNick(inputNick, _users);
 	if (!msg.empty())
 	{
 		sendClientMsg(client_fd, msg);
-		return ;
+	}
+	if (!_user->getNick().empty())
+	{
+		std::string msg = ":" + _user->getNick() + " NICK " + inputNick + "\r\n";
+		sendClientMsg(client_fd, msg);
 	}
 	_user->setNick(inputNick);
 	if(_user->getChannel())

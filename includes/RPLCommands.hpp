@@ -37,7 +37,9 @@
 
 #define RPL_NOTOPIC(channel) ("331 " + channel + " :No topic is set\n")
 
-#define RPL_TOPIC(nick, channel, topic) (":" + SERVER_NAME + " 332 " + nick + " " + channel + " :" + topic + "\r\n")
+#define RPL_TOPIC(channel, topic) (": 332" + channel + " :" + topic + "\r\n")
+
+#define RPL_TOPIC2(nickname, channel, topic) (": 332 " + nickname + " " + channel + " :" + topic + + "\r\n")
 
 #define RPL_TOPICWHOTIME(channel, nick, time) (":" + SERVER_NAME + " 333 " + nick + " " + channel + " " + time + "\r\n")
 
@@ -45,9 +47,9 @@
 
 #define RPL_WHOREPLY(nickname, host,  channelname, user, realname, flag) (":" + host + " 352 " + nickname + " " + channelname + " " + host + " " + SERVER_NAME + " " + user + " " + flag + " :2 " + realname + "\r\n")
 
-#define RPL_NAMREPLY(nick, channel, users) (":localhost 353 " + nick + " = " + channel + " :" + users + "\r\n")
+#define RPL_NAMREPLY(nick, channel, users) (": 353 " + nick + " = " + channel + " :" + users + "\r\n")
 
-#define RPL_ENDOFNAMES(nickname, channel) (":localhost 366 " + nickname + " " + channel + " :End of /NAMES list\r\n")
+#define RPL_ENDOFNAMES(channel) (": 366 " + channel + " :End of /NAMES list\r\n")
 /*-----------------------------*/
 
 
