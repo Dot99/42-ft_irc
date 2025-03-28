@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 10:26:42 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/26 10:31:44 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 09:47:30 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,6 @@ void signalHandler(int signum)
 
 int main(int argc, char **argv)
 {
-	//TODO:MEMORY LEAKS AND USERNAME
 	if (checkArgs(argc, argv, args))
 		return(1);
 	try

@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:50:27 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/27 15:31:04 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 10:07:24 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,8 +54,8 @@
 
 
 /*-------Miscellaneous---------*/
-#define RPL_MOTDSTART(nick) "375 " + nick + " :- " + SERVER_NAME + " Message of the day - \r\n" 
-#define RPL_MOTD(nick) "372 " + nick + ":- HEYOO\r\n"
+#define RPL_MOTDSTART(nick) ("375 " + nick + " :- " + SERVER_NAME + " Message of the day - \r\n" )
+#define RPL_MOTD(nick, line) ("372 " + nick + ":- " + line + "\r\n")
 #define RPL_ENDOFMOTD(nick) "376 " + nick + ":End of /MOTD command.\r\n"
 
 /*-----------------------------*/
@@ -82,7 +82,7 @@
 
 #define ERR_NEEDMOREPARAMS(command) ("461 " + command + " :Not enough parameters\n")
 
-#define ERR_ALREADYREGISTRED "462 :You may not reregister\n"
+#define ERR_ALREADYREGISTERED "462 :You may not reregister\n"
 
 #define ERR_PASSWDMISMATCH "464 :Password incorrect\n"
 

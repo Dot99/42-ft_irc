@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/07 08:57:34 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/26 09:53:17 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 10:08:00 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,3 +48,5 @@ void sendClientMsg(int client_fd, std::string msg);
 std::string clean_input(std::string input, int what );
 bool wildcardMatch(const std::string &str, const std::string &pattern);
 std::string checkNick(const std::string& nick, std::vector<Client *> &users);
+std::string to_string(int num);
+void sendMotd(int clientFd, const std::string& nick);

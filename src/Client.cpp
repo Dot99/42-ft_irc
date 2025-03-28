@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/21 13:51:10 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 09:47:53 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,7 +153,7 @@ int Client::acceptClient(int client_fd)
 	if(client_fd < 0)
 	{
 		std::cerr << "Error: Client connection failed" << std::endl;
-		//TODO: close(_server.getSock());
+		close(_server.getSock());
 		return(-1);
 	}
 	setHost(std::string(inet_ntoa(_client_adrr.sin_addr)));
