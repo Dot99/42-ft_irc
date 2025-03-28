@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 10:13:50 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 10:57:21 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,10 +62,16 @@ bool checkArgs(int argc, char **argv, std::vector<std::string> &args)
 		std::cerr << "Erro: Porta inválida\n";
 		//std::exit(EXIT_FAILURE);
 	}
-	if(port < 0 || port > 65535)
+	if(port < 1 || port > 65535)
 	{
-		std::cout << "Error: Invalid port(Between 0 and 65535)" << std::endl;
+		std::cout << "Error: Invalid port(Between 1 and 65535)" << std::endl;
 		std::cout << "Usage: ./ircserv [port] [password]" << std::endl;
+		return (true);
+	}
+	if(port >= 1 && port <= 1023)
+	{
+		std::cout << "Warning: Port is a reserved" << std::endl;
+		std::cout << "Sugestion: Ports between 6660 and 7000" << std::endl;
 		return (true);
 	}
 	if(args[2].size() == 0)

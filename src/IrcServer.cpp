@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 10:27:26 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 10:51:17 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -324,15 +324,15 @@ void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 		sendClientMsg(client_fd, ERR_NOTONCHANNEL(_user->getNick(), channelName));
 		return ;
 	}
-	std::vector<Client *> users = _user->getChannel()->getUsers();
-	for (size_t i = 0; i < users.size(); i++)
-		sendClientMsg(users[i]->getFd(), _user->getNick() + "  leave channel " + _user->getChannel()->getName() + "\n");
 	std::string msg = ":" + _user->getNick() + "!" + _user->getUser() + "@" + _user->getHost() + " PART " + _user->getChannel()->getName();
 	if(!restOfCommand.empty())
 		msg += " :" + restOfCommand + "\r\n";
 	else
 		msg += "\r\n";
 	sendClientMsg(_user->getFd(), msg);
+	std::vector<Client *> users = _user->getChannel()->getUsers();
+	for (size_t i = 0; i < users.size(); i++)
+		sendClientMsg(users[i]->getFd(), msg);
 	_user->getChannel()->removeUser(_user);
 	_user->setChannel(NULL);
 	if(getChannelByName(channelName)->getUsers().size() == 0)
