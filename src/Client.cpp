@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 12:43:46 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 15:44:12 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,6 +175,12 @@ int Client::acceptClient(int client_fd)
 	return(client_fd);
 }
 
+/**
+ * @brief Validates the user
+ * 
+ * @param client_fd Client file descriptor
+ * @param input Input string
+*/
 void Client::validateUser(int client_fd, std::string input)
 {
 	if(input.empty())

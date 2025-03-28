@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 12:50:05 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 15:42:55 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -101,6 +101,10 @@ void IrcServer::startServer()
 	std::cout << "Server started on port: " << _port << std::endl;
 }
 
+/**
+ * @brief Run the server
+ * 
+ */
 void IrcServer::run()
 {
 	int client_fd = 0;
@@ -144,7 +148,7 @@ void IrcServer::run()
 						sendClientMsg(client_fd, RPL_CREATED(_now));
 						sendClientMsg(client_fd, RPL_MYINFO(SERVER_NAME, _users.back()->getNick(), "1.0"));
 						sendClientMsg(client_fd, RPL_MOTDSTART(_users.back()->getNick()));
-						// sendMotd(client_fd, _users.back()->getNick());
+						sendMotd(client_fd, _users.back()->getNick());
 						sendClientMsg(client_fd, RPL_ENDOFMOTD(_users.back()->getNick()));
 						_users.back()->setWelcomeSent(true);
 					}
@@ -380,6 +384,10 @@ void IrcServer::listCommand(int client_fd, std::string restOfCommand)
 	sendClientMsg(client_fd, RPL_LISTEND);
 }
 
+/**
+ * @brief Command to exit the server
+ * @param client_fd File descriptor of the client
+*/
 void IrcServer::exitCommand(int client_fd)
 {
 	_user->getChannel()->removeUser(_user);
@@ -387,6 +395,10 @@ void IrcServer::exitCommand(int client_fd)
 	close(client_fd);
 }
 
+/**
+ * @brief Command to kick a user from a channel
+ * @param client_fd File descriptor of the client
+*/
 void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
@@ -428,6 +440,10 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 		sendClientMsg(client_fd, ERR_NOTONCHANNEL(_user->getNick(), channelName));
 }
 
+/**
+ * @brief Command to invite a user to a channel
+ * @param client_fd File descriptor of the client
+*/
 void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
@@ -476,6 +492,10 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 	
 }
 
+/**
+ * @brief Command to set the topic of a channel
+ * @param client_fd File descriptor of the client
+*/
 void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
@@ -525,6 +545,10 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 	}
 }
 
+/**
+ * @brief Command to set the mode of a channel
+ * @param client_fd File descriptor of the client
+*/
 void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 {
 	std::string mode = "itkol";
@@ -713,6 +737,10 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 	}
 }
 
+/**
+ * @brief Command to set the password of the server
+ * @param client_fd File descriptor of the client
+*/
 void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 {
 	if(restOfCommand != _pwd)
@@ -720,10 +748,6 @@ void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 		sendClientMsg(client_fd, ERR_PASSWDMISMATCH);
 		close(client_fd);
 	}
-	// else
-	// {
-	// 	_user->setAuthenticated(true);
-	// }
 }
 
 /**
@@ -759,11 +783,6 @@ void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 			sendClientMsg(users[i]->getFd(), msg);
 		}
 	}
-	// if (!_user->getUser().empty())
-	// {
-	// 	sendClientMsg(client_fd, "CAP * LS\r\n");
-	// 	_user->setAuthenticated(true);
-	// }
 	if (!_user->getWelcomeSent() && !_user->getUser().empty() && !_user->getNick().empty())
 	{
 		sendClientMsg(client_fd, RPL_WELCOME(_user->getNick(), SERVER_NAME));
@@ -771,12 +790,16 @@ void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 		sendClientMsg(client_fd, RPL_CREATED(_now));
 		sendClientMsg(client_fd, RPL_MYINFO(SERVER_NAME, _users.back()->getNick(), "1.0"));
 		sendClientMsg(client_fd, RPL_MOTDSTART(_users.back()->getNick()));
-		// sendMotd(client_fd, _users.back()->getNick());
+		sendClientMsg(client_fd, _users.back()->getNick());
 		sendClientMsg(client_fd, RPL_ENDOFMOTD(_users.back()->getNick()));
 	}
 	return ;
 }
 
+/**
+ * @brief Command to set the user of the client
+ * @param client_fd File descriptor of the client
+*/
 void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
@@ -830,6 +853,10 @@ void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 	}
 }
 
+/**
+ * @brief Command to quit the server
+ * @param client_fd File descriptor of the client
+*/
 void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 {
 	if(_user->getChannel())
@@ -890,6 +917,10 @@ void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 	close(client_fd);
 }
 
+/**
+ * @brief Command to get the list of users in a channel
+ * @param client_fd File descriptor of the client
+*/
 void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
@@ -926,6 +957,11 @@ void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
 	sendClientMsg(client_fd, RPL_ENDOFWHO(_user->getNick(), channel));
 }
 
+/**
+ * @brief Command to parse the command received from the client
+ * @param client_fd File descriptor of the client
+ * @param command Command received from the client
+*/
 void IrcServer::parseCommand(int client_fd, std::string command)
 {
 	if(command == "\r\n")

@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 10:57:21 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 15:45:25 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,6 +144,12 @@ std::string readLine(int client_fd, unsigned long max_length) {
 	return sanitizeInput(input);
 }
 
+/**
+ * @brief Send a message to the client
+ * 
+ * @param client_fd Client file descriptor
+ * @param msg Message to send
+ */
 void sendClientMsg(int client_fd, std::string msg)
 {
 	if (send(client_fd, msg.c_str(), msg.length(), 0) == -1)
@@ -154,7 +160,14 @@ void sendClientMsg(int client_fd, std::string msg)
 	std::cout << "Sent to client[" << client_fd << "]: " << msg;
 }
 
-std::string clean_input(std::string input, int what )
+/**
+ * @brief Clean the input string by removing spaces or enter characters
+ * 
+ * @param input Input string
+ * @param what What to remove (SPACES or ENTER)
+ * @return std::string Cleaned input string
+ */
+std::string clean_input(std::string input, int what)
 {
 	std::string result;
 	for (std::string::iterator it = input.begin(); it != input.end(); ++it)
@@ -169,6 +182,14 @@ std::string clean_input(std::string input, int what )
 	return result;
 }
 
+/**
+ * @brief Check if a string matches a wildcard pattern
+ * 
+ * @param str String to check
+ * @param pattern Wildcard pattern
+ * @return true If the string matches the pattern
+ * @return false If the string does not match the pattern
+ */
 bool wildcardMatch(const std::string &str, const std::string &pattern)
 {
 	size_t strIndex = 0, patternIndex = 0, matchIndex = 0;
@@ -204,6 +225,13 @@ bool wildcardMatch(const std::string &str, const std::string &pattern)
 	return patternIndex == pattern.size();
 }
 
+/**
+ * @brief Check if the nickname is valid
+ * 
+ * @param nick Nickname
+ * @param users List of users
+ * @return std::string Error message if invalid, empty string if valid
+ */
 std::string checkNick(const std::string& nick, std::vector<Client *> &users)
 {
 	if (nick.empty())
@@ -234,6 +262,13 @@ std::string checkNick(const std::string& nick, std::vector<Client *> &users)
 	return "";
 }
 
+/**
+ * @brief Check if the channel name is valid
+ * 
+ * @param channelName Channel name
+ * @param channels List of channels
+ * @return Channel* Pointer to the channel if it exists, NULL otherwise
+ */
 Channel *checkChannelName(const std::string& channelName, std::vector<Channel *> &channels)
 {
 	std::string lowercaseNick = channelName;
@@ -250,6 +285,12 @@ Channel *checkChannelName(const std::string& channelName, std::vector<Channel *>
 	return NULL;
 }
 
+/**
+ * @brief Convert an integer to a string
+ * 
+ * @param num Integer to convert
+ * @return std::string Converted string
+ */
 std::string to_string(int num)
 {
 	std::ostringstream oss;
@@ -257,6 +298,12 @@ std::string to_string(int num)
 	return oss.str();
 }
 
+/**
+ * @brief Send the Message of the Day (MOTD) to the client
+ * 
+ * @param clientFd File descriptor of the client
+ * @param nick Nickname of the client
+ */
 void sendMotd(int clientFd, const std::string& nick)
 {
     std::vector<std::string> motdLines;
