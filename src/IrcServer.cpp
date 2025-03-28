@@ -34,6 +34,7 @@ IrcServer::~IrcServer()
 	{
 		if (_users[i])
 		{
+			close(_users[i]->getFd());
 			delete _users[i];
 			_users[i] = NULL;
 		}
