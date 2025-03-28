@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 09:47:53 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 12:43:46 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,11 @@ Client::Client(IrcServer &server) : _server(server)
 */
 Client::~Client()
 {
+	if(_channel)
+	{
+		_channel->removeUser(this);
+		_channel = NULL;
+	}
 }
 
 /**

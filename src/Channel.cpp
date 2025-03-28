@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/18 16:28:29 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/20 17:01:33 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 12:34:23 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,19 +34,28 @@ Channel::~Channel()
 	for (size_t i = 0; i < _users.size(); i++)
 	{
 		if(_users[i])
+		{
 			delete _users[i];
+			_users[i] = NULL;
+		}
 	}
 	_users.clear();
 	for (size_t i = 0; i < _operators.size(); i++)
 	{
 		if(_operators[i])
+		{
 			delete _operators[i];
+			_operators[i] = NULL;
+		}
 	}
 	_operators.clear();
 	for (size_t i = 0; i < _invitedUsers.size(); i++)
 	{
 		if(_invitedUsers[i])
+		{
 			delete _invitedUsers[i];
+			_invitedUsers[i] = NULL;
+		}
 	}
 	_invitedUsers.clear();
 }

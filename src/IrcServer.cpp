@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 10:51:17 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/28 12:50:05 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,13 +33,19 @@ IrcServer::~IrcServer()
 	for (size_t i = 0; i < _users.size(); i++)
 	{
 		if (_users[i])
+		{
 			delete _users[i];
+			_users[i] = NULL;
+		}
 	}
 	_users.clear();
 	for (size_t i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i])
+		{
 			delete _channels[i];
+			_channels[i] = NULL;
+		}
 	}
 	_channels.clear();
 	std::vector<pollfd>().swap(_poll_fds);
@@ -837,10 +843,18 @@ void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 		_user->getChannel()->removeUser(_user);
 		_user->setChannel(NULL);
 		if(getChannelByName(channelName)->getUsers().empty())
-			delete getChannelByName(channelName);
+		{
+			for(size_t i = 0; i < _channels.size(); i++)
+				if(_channels[i]->getName() == channelName)
+				{
+					delete _channels[i];
+					_channels.erase(_channels.begin() + i);
+					break;
+				}
+		}
 	}
 	if(restOfCommand.empty())
-		sendClientMsg(client_fd, "ERROR :Closing Link: Quit:");
+		sendClientMsg(client_fd, "ERROR :Closing Link: Quit: Client Quit");
 	else
 		sendClientMsg(client_fd, "ERROR :Closing Link: Quit: " + restOfCommand);
 	for (size_t i = 0; i < _users.size(); i++)
@@ -848,11 +862,27 @@ void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 		if (_users[i]->getFd() == client_fd)
 		{
 			delete _users[i];
+			_users[i] = NULL;
 			_users.erase(_users.begin() + i);
 			break;
 		}
 	}
-	
+	for(size_t i = 0; i < _poll_fds.size(); i++)
+	{
+		if(_poll_fds[i].fd == client_fd)
+		{
+			_poll_fds.erase(_poll_fds.begin() + i);
+			break;
+		}
+	}
+	for(size_t i = 0; i < _users.size(); i++)
+	{
+		if(_users[i]->getFd() == client_fd)
+		{
+			_users.erase(_users.begin() + i);
+			break;
+		}
+	}
 	close(client_fd);
 }
 
