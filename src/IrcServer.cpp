@@ -144,7 +144,7 @@ void IrcServer::run()
 						sendClientMsg(client_fd, RPL_CREATED(_now));
 						sendClientMsg(client_fd, RPL_MYINFO(SERVER_NAME, _users.back()->getNick(), "1.0"));
 						sendClientMsg(client_fd, RPL_MOTDSTART(_users.back()->getNick()));
-						sendMotd(client_fd, _users.back()->getNick());
+						// sendMotd(client_fd, _users.back()->getNick());
 						sendClientMsg(client_fd, RPL_ENDOFMOTD(_users.back()->getNick()));
 						_users.back()->setWelcomeSent(true);
 					}
@@ -232,15 +232,9 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
 		return ;
 	}
-	for (size_t i = 0; i < _channels.size(); i++)
-	{
-		if (_channels[i] && _channels[i]->getName() == channelName)
-		{
-			channelExists = true;
-			channel = _channels[i];
-			break;
-		}
-	}
+	channel = checkChannelName(channelName, _channels);
+	if (channel)
+		channelExists = true;
 	if (channelExists && _user->getChannel() == NULL)
 	{
 		// Check invite-only and password conditions
@@ -323,6 +317,11 @@ void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 	if (!getChannelByName(channelName))
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
+		return ;
+	}
+	if (_user->getChannel() == NULL)
+	{
+		sendClientMsg(client_fd, ERR_NOTONCHANNEL(_user->getNick(), channelName));
 		return ;
 	}
 	if (_user->getChannel()->getName() != channelName)
@@ -479,6 +478,12 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 
 void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 {
+	std::istringstream iss(restOfCommand);
+	std::string channelName;
+	std::string inputTopic;
+	iss >> channelName >> inputTopic;
+	if (inputTopic[0] && inputTopic[0] == ':')
+		inputTopic = inputTopic.substr(1);
 	if(_user->getOperator() == false || _user->getChannel() == NULL)
 	{
 		if(_user->getChannel()->getTopicProtection())
@@ -487,8 +492,7 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 			return ;
 		}
 	}
-	std::string inputTopic = restOfCommand;
-	if(inputTopic.empty())
+	if (inputTopic.empty())
 	{
 		if(_user->getChannel()->getTopic().empty())
 			sendClientMsg(client_fd, RPL_NOTOPIC(_user->getChannel()->getName()));
@@ -767,7 +771,7 @@ void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 		sendClientMsg(client_fd, RPL_CREATED(_now));
 		sendClientMsg(client_fd, RPL_MYINFO(SERVER_NAME, _users.back()->getNick(), "1.0"));
 		sendClientMsg(client_fd, RPL_MOTDSTART(_users.back()->getNick()));
-		sendMotd(client_fd, _users.back()->getNick());
+		// sendMotd(client_fd, _users.back()->getNick());
 		sendClientMsg(client_fd, RPL_ENDOFMOTD(_users.back()->getNick()));
 	}
 	return ;

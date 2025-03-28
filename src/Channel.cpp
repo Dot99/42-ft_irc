@@ -35,7 +35,7 @@ Channel::~Channel()
 	{
 		if(_users[i])
 		{
-			delete _users[i];
+			removeUser(_users[i]);
 			_users[i] = NULL;
 		}
 	}

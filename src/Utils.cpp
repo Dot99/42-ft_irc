@@ -234,6 +234,22 @@ std::string checkNick(const std::string& nick, std::vector<Client *> &users)
 	return "";
 }
 
+Channel *checkChannelName(const std::string& channelName, std::vector<Channel *> &channels)
+{
+	std::string lowercaseNick = channelName;
+	std::transform(lowercaseNick.begin(), lowercaseNick.end(), lowercaseNick.begin(), ::tolower);
+
+	for (size_t i = 0; i < channels.size(); i++)
+	{
+		std::string existingNick = channels[i]->getName();
+		std::transform(existingNick.begin(), existingNick.end(), existingNick.begin(), ::tolower);
+
+		if (existingNick == lowercaseNick)
+			return channels[i];
+	}
+	return NULL;
+}
+
 std::string to_string(int num)
 {
 	std::ostringstream oss;

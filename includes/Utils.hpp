@@ -48,5 +48,6 @@ void sendClientMsg(int client_fd, std::string msg);
 std::string clean_input(std::string input, int what );
 bool wildcardMatch(const std::string &str, const std::string &pattern);
 std::string checkNick(const std::string& nick, std::vector<Client *> &users);
+Channel *checkChannelName(const std::string& channelName, std::vector<Channel *> &channels);
 std::string to_string(int num);
 void sendMotd(int clientFd, const std::string& nick);
