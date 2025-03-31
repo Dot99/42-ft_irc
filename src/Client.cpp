@@ -30,7 +30,7 @@ Client::Client(IrcServer &server) : _server(server)
 */
 Client::~Client()
 {
-	if(_channel)
+	if (_channel)
 	{
 		_channel->removeUser(this);
 		_channel = NULL;

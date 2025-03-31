@@ -29,12 +29,13 @@ class IrcServer
 		std::vector<std::string> _args;
 		Client *_user;
 	public:
-		IrcServer(const std::vector<std::string> &args);
+		IrcServer(char **argv, int argc);
 		IrcServer &operator=(const IrcServer &rhs);
 		virtual ~IrcServer();
 
 		void addChannel(Channel *channel);
 		void addUser(Client *client);
+		void removeUser(Client *client);
 		void startServer();
 		void run();
 
@@ -56,7 +57,7 @@ class IrcServer
 		//-----------------GETTERS/SETTERS-----------------//
 		void setArgs(const std::vector<std::string> &args);
 		void setPollFds(int i, int fd, short int revents); 
-		void setPwd(std::string pwd);
+		void setPwd(std::string const &pwd);
 		int getSock() const;
 		std::string getPwd() const;
 		struct pollfd &getPollFds(int i);

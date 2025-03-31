@@ -17,10 +17,35 @@
  * 
  * @param args Arguments
  */
-IrcServer::IrcServer(const std::vector<std::string> &args) : _args(args)
+IrcServer::IrcServer(char **argv, int argc)
 {
+	_args.reserve(argc);
+	for (int i = 0; i < argc; i++)
+		_args.push_back(std::string(argv[i]));
 	setArgs(_args);
 	startServer();
+}
+
+/**
+ * @brief Copy assignment operator
+ * 
+ * @param rhs IrcServer object to copy
+ * @return IrcServer& Reference to the current object
+ */
+IrcServer &IrcServer::operator=(const IrcServer &rhs)
+{
+	if (this != &rhs)
+	{
+		_port = rhs._port;
+		_socket = rhs._socket;
+		_pwd = rhs._pwd;
+		_now = rhs._now;
+		_server_addr = rhs._server_addr;
+		_poll_fds = rhs._poll_fds;
+		_channels = rhs._channels;
+		_users = rhs._users;
+	}
+	return *this;
 }
 
 /**
@@ -30,13 +55,12 @@ IrcServer::IrcServer(const std::vector<std::string> &args) : _args(args)
 IrcServer::~IrcServer()
 {
 	close(_socket);
-	for (size_t i = 0; i < _users.size(); i++)
+	for (size_t i = 1; i < _users.size(); i++)
 	{
 		if (_users[i])
 		{
 			close(_users[i]->getFd());
-			delete _users[i];
-			_users[i] = NULL;
+			removeUser(_users[i]);
 		}
 	}
 	_users.clear();
@@ -50,11 +74,11 @@ IrcServer::~IrcServer()
 		}
 	}
 	_channels.clear();
-	for(size_t i = 0; i < _args.size(); i++)
-	{
-		_args[i].clear();
-	}
-	_args.clear();
+	std::cout << "args size :" << _args.size() << std::endl;
+	std::cout << "Cleaning up args..." << std::endl;
+    _args.clear();
+    std::vector<std::string>().swap(_args);
+    std::cout << "Args cleaned, size: " << _args.size() << std::endl;
 	for(size_t i = 0; i < _poll_fds.size(); i++)
 	{
 		if (_poll_fds[i].fd != -1)
@@ -1153,7 +1177,7 @@ void IrcServer::setPollFds(int i, int fd, short int revents)
  * 
  * @param pwd Password
 */
-void IrcServer::setPwd(std::string pwd)
+void IrcServer::setPwd(std::string const &pwd)
 {
 	_pwd = pwd;
 }
@@ -1177,4 +1201,22 @@ void IrcServer::addChannel(Channel *channel)
 void IrcServer::addUser(Client *client)
 {
 	_users.push_back(client);
+}
+
+/**
+ * @brief Set the Client object
+ * 
+ * @param client Client
+*/
+void IrcServer::removeUser(Client *client)
+{
+	for (size_t i = 0; i < _users.size(); i++)
+	{
+		if (_users[i] == client)
+		{
+			delete _users[i];
+			_users.erase(_users.begin() + i);
+			break;
+		}
+	}
 }

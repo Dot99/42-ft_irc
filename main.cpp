@@ -12,22 +12,28 @@
 
 #include "Utils.hpp"
 
+IrcServer *server = NULL;
+
 void signalHandler(int signum)
 {
+	if (server)
+	{
+		delete server;
+		server = NULL;
+	}
 	exit(signum);
 }
 
 int main(int argc, char **argv)
 {
 	if (checkArgs(argc, argv))
-	return(1);
+		return(1);
 	try
 	{
 		signal(SIGINT, signalHandler);
 		signal(SIGQUIT, signalHandler);
-		std::vector<std::string> args(argv, argv + argc);
-		IrcServer server(args);
-		server.run();
+		server = new IrcServer(argv, argc);
+		server->run();
 	}
 	catch(const std::exception& e)
 	{
