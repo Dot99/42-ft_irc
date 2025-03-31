@@ -80,6 +80,8 @@
 
 #define ERR_USERONCHANNEL(nick, channel) ("443 " + nick + " " + channel + " :is already on channel\n")
 
+#define ERR_NOTREGISTERED "451 :You have not registered\n"
+
 #define ERR_NEEDMOREPARAMS(command) ("461 " + command + " :Not enough parameters\n")
 
 #define ERR_ALREADYREGISTERED "462 :You may not reregister\n"

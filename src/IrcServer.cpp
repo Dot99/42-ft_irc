@@ -55,12 +55,12 @@ IrcServer &IrcServer::operator=(const IrcServer &rhs)
 IrcServer::~IrcServer()
 {
 	close(_socket);
-	for (size_t i = 1; i < _users.size(); i++)
+	for (size_t i = 0; i < _users.size(); i++)
 	{
 		if (_users[i])
 		{
 			close(_users[i]->getFd());
-			removeUser(_users[i]);
+			delete _users[i];
 		}
 	}
 	_users.clear();
@@ -74,11 +74,8 @@ IrcServer::~IrcServer()
 		}
 	}
 	_channels.clear();
-	std::cout << "args size :" << _args.size() << std::endl;
-	std::cout << "Cleaning up args..." << std::endl;
     _args.clear();
     std::vector<std::string>().swap(_args);
-    std::cout << "Args cleaned, size: " << _args.size() << std::endl;
 	for(size_t i = 0; i < _poll_fds.size(); i++)
 	{
 		if (_poll_fds[i].fd != -1)
@@ -982,7 +979,7 @@ void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
 */
 void IrcServer::parseCommand(int client_fd, std::string command)
 {
-	if(command == "\r\n")
+	if(command == "\r\n" || command.empty())
 		return ;
 	std::string commands[14] = {"JOIN", "PART", "LIST", "EXIT", "KICK",  "INVITE", "TOPIC", "MODE", "PASS", "NICK", "USER", "PRIVMSG", "QUIT", "WHO"};
 	int i = 0;
@@ -1149,9 +1146,11 @@ Client *IrcServer::getUserByNick(std::string nick)
 */
 Client *IrcServer::getUserFd(int fd)
 {
+	if (fd < 0 || _users.size() == 0)
+		return NULL;
 	for (size_t i = 0; i < _users.size(); i++)
 	{
-		if (_users[i]->getFd() == fd)
+		if (_users[i] && _users[i]->getFd() == fd)
 		{
 			return _users[i];
 		}
