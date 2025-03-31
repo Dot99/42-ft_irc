@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 15:45:25 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/31 10:33:43 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,11 +38,8 @@ bool isNumber(std::string str)
  * @return true If the arguments are invalid
  * @return false If the arguments are valid
 */
-bool checkArgs(int argc, char **argv, std::vector<std::string> &args)
+bool checkArgs(int argc, char **argv)
 {
-	args.clear();
-	for(int i = 0; i < argc; i++)
-		args.push_back(argv[i]);
 	if(argc != 3)
 	{
 		std::cout << "Error: Invalid number of arguments" << std::endl;
@@ -55,26 +52,19 @@ bool checkArgs(int argc, char **argv, std::vector<std::string> &args)
 		std::cout << "Usage: ./ircserv [port] [password]" << std::endl;
 		return (true);
 	}
-	std::istringstream iss(args[1]);
-	int port;
-	if (!(iss >> port))
-	{
-		std::cerr << "Erro: Porta inválida\n";
-		//std::exit(EXIT_FAILURE);
-	}
-	if(port < 1 || port > 65535)
+	if(atoi(argv[1]) < 1 || atoi(argv[1]) > 65535)
 	{
 		std::cout << "Error: Invalid port(Between 1 and 65535)" << std::endl;
 		std::cout << "Usage: ./ircserv [port] [password]" << std::endl;
 		return (true);
 	}
-	if(port >= 1 && port <= 1023)
+	if(atoi(argv[1]) >= 1 && atoi(argv[1]) <= 1023)
 	{
 		std::cout << "Warning: Port is a reserved" << std::endl;
 		std::cout << "Sugestion: Ports between 6660 and 7000" << std::endl;
 		return (true);
 	}
-	if(args[2].size() == 0)
+	if(strlen(argv[2]) == 0)
 	{
 		std::cout << "Error: Invalid password" << std::endl;
 		std::cout << "Usage: ./ircserv [port] [password]" << std::endl;

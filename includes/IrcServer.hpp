@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 10:34:13 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/26 09:54:26 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/31 10:30:27 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ class IrcServer
 		std::vector<struct pollfd> _poll_fds;
 		std::vector<Channel *> _channels;
 		std::vector<Client *> _users;
+		std::vector<std::string> _args;
 		Client *_user;
 	public:
 		IrcServer(const std::vector<std::string> &args);

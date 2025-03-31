@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 15:42:55 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/31 10:35:31 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,9 @@
  * 
  * @param args Arguments
  */
-IrcServer::IrcServer(const std::vector<std::string> &args)
+IrcServer::IrcServer(const std::vector<std::string> &args) : _args(args)
 {
-	setArgs(args);
+	setArgs(_args);
 	startServer();
 }
 
@@ -34,11 +34,13 @@ IrcServer::~IrcServer()
 	{
 		if (_users[i])
 		{
+			close(_users[i]->getFd());
 			delete _users[i];
 			_users[i] = NULL;
 		}
 	}
 	_users.clear();
+	std::vector<Client *>().swap(_users);
 	for (size_t i = 0; i < _channels.size(); i++)
 	{
 		if (_channels[i])
@@ -48,6 +50,17 @@ IrcServer::~IrcServer()
 		}
 	}
 	_channels.clear();
+	for(size_t i = 0; i < _args.size(); i++)
+	{
+		_args[i].clear();
+	}
+	_args.clear();
+	for(size_t i = 0; i < _poll_fds.size(); i++)
+	{
+		if (_poll_fds[i].fd != -1)
+			close(_poll_fds[i].fd);
+	}
+	_poll_fds.clear();
 	std::vector<pollfd>().swap(_poll_fds);
 	_now.clear();
 }
@@ -133,7 +146,8 @@ void IrcServer::run()
 					if (client_fd < 0)
 					{
 						std::cerr << "Error accepting client" << std::endl;
-						break;
+						delete _users.back();
+						continue;
 					}
 					struct pollfd newPoll;
 					newPoll.fd = client_fd;
@@ -192,27 +206,6 @@ void IrcServer::setArgs(const std::vector<std::string> &args)
 		<< ltm->tm_min << ":"
 		<< ltm->tm_sec;
 	_now = ss.str();
-}
-
-/**
- * @brief Set the Client object
- * 
- * @param client Client
-*/
-void IrcServer::addChannel(Channel *channel)
-{
-	_channels.push_back(channel);
-
-}
-
-/**
- * @brief Set the Client object
- * 
- * @param client Client
-*/
-void IrcServer::addUser(Client *client)
-{
-	_users.push_back(client);
 }
 
 
@@ -746,6 +739,7 @@ void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 	if(restOfCommand != _pwd)
 	{
 		sendClientMsg(client_fd, ERR_PASSWDMISMATCH);
+		sendClientMsg(client_fd, "ERROR :Closing Link: Pass: Password incorrect\r\n");
 		close(client_fd);
 	}
 }
@@ -1162,4 +1156,25 @@ void IrcServer::setPollFds(int i, int fd, short int revents)
 void IrcServer::setPwd(std::string pwd)
 {
 	_pwd = pwd;
+}
+
+/**
+ * @brief Set the Client object
+ * 
+ * @param client Client
+*/
+void IrcServer::addChannel(Channel *channel)
+{
+	_channels.push_back(channel);
+
+}
+
+/**
+ * @brief Set the Client object
+ * 
+ * @param client Client
+*/
+void IrcServer::addUser(Client *client)
+{
+	_users.push_back(client);
 }

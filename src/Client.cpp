@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 15:44:12 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/31 09:56:54 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,6 +166,7 @@ int Client::acceptClient(int client_fd)
 	std::string input = readLine(client_fd, 512);
 	if(input.empty())
 	{
+		std::cerr << "Error: No input from client" << std::endl;
 		close(client_fd);
 		return (-1);
 	}

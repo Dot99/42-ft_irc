@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/07 08:57:34 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 10:08:00 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/31 10:31:56 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ class Channel;
 class Client;
 class IrcServer;
 
-bool checkArgs(int argc, char **argv, std::vector<std::string> &args);
+bool checkArgs(int argc, char **argv);
 std::string readLine(int client_fd, unsigned long max_length);
 void sendClientMsg(int client_fd, std::string msg);
 std::string clean_input(std::string input, int what );

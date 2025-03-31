@@ -6,7 +6,7 @@
 #    By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/03/03 09:45:33 by gude-jes          #+#    #+#              #
-#    Updated: 2025/03/10 12:19:22 by gude-jes         ###   ########.fr        #
+#    Updated: 2025/03/31 08:48:05 by gude-jes         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -44,5 +44,7 @@ fclean: clean
 	$(RM) $(NAME) $(OBJ_DIR)
 
 re: fclean all
+
+.PHONY: all clean fclean re
 
 .SILENT:
