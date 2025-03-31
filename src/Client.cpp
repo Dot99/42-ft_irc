@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/31 09:56:54 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/03/31 14:34:29 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@ Client::Client(IrcServer &server) : _server(server)
 	_isOperator = false;
 	_channel = NULL;
 	_welcome_sent = false;
+	_passwordVerified = false;
 };
 
 /**
@@ -34,6 +35,11 @@ Client::~Client()
 	{
 		_channel->removeUser(this);
 		_channel = NULL;
+	}
+	if(fd >= 0)
+	{
+		close(fd);
+		fd = -1;
 	}
 }
 
@@ -123,31 +129,6 @@ void Client::handleClientMessage(int client_fd)
 }
 
 /**
- * @brief Checks if the password is correct
- * 
- * @param client_fd Client file descriptor
- * @return int Client file descriptor
-*/
-int Client::checkPwd(int client_fd)
-{
-	send(client_fd, "Enter server password: ", 23, 0);
-	std::string input = readLine(client_fd, _server.getPwd().size());
-	if(input.empty())
-	{
-		send(client_fd, "Invalid password\n", 17, 0);
-		close(client_fd);
-		return (-1);
-	}
-	if (input != _server.getPwd())
-	{
-		send(client_fd, "Invalid password", 16, 0);
-		close(client_fd);
-		return -1;
-	}
-	return (client_fd);
-}
-
-/**
  * @brief Accepts a client connection
  * @param client_fd Client file descriptor
 */
@@ -164,16 +145,20 @@ int Client::acceptClient(int client_fd)
 	setHost(std::string(inet_ntoa(_client_adrr.sin_addr)));
 	setFd(client_fd);
 	std::string input = readLine(client_fd, 512);
-	if(input.empty())
+	if(input.empty() || input.find("CAP LS") == std::string::npos)
 	{
-		std::cerr << "Error: No input from client" << std::endl;
+		std::cerr << "Error: No input from client: " << client_fd << std::endl;
+		sendClientMsg(client_fd, "Leave NC and try again \r\n");
 		close(client_fd);
 		return (-1);
 	}
 	if(input.find("CAP LS") != std::string::npos)
-		input = readLine(client_fd, 512);
-	validateUser(client_fd, input);
-	return(client_fd);
+	{
+		while(!getAuthenticated())
+			validateUser(client_fd);	
+		return(client_fd);
+	}
+	return (-1);
 }
 
 /**
@@ -182,31 +167,18 @@ int Client::acceptClient(int client_fd)
  * @param client_fd Client file descriptor
  * @param input Input string
 */
-void Client::validateUser(int client_fd, std::string input)
+void Client::validateUser(int client_fd)
 {
-	if(input.empty())
-	{
-		std::string command = "PASS";
-		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(command));
-		close(client_fd);
-	}
-	else
-	{
-		_server.parseCommand(client_fd, input);
-		input = readLine(client_fd, 512);
-		_server.parseCommand(client_fd, input);
-		input = readLine(client_fd, 512);
-		if(input.empty())
-		{
-			std::string command = "USER";
-			sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(command));
-			close(client_fd);
-		}
-		else
+	std::string input = readLine(client_fd, 512);
+	if (input.find("PASS") != std::string::npos)
 			_server.parseCommand(client_fd, input);
-	}
+	else if ((input.find("NICK")) != std::string::npos)
+		_server.parseCommand(client_fd, input);
+	else if (input.find("USER") != std::string::npos)
+		_server.parseCommand(client_fd, input);
+	else
+		return;
 }
-
 
 
 /*---------------------------- GETTERS/SETTERS---------------------------- */
@@ -219,7 +191,7 @@ void Client::validateUser(int client_fd, std::string input)
  * 
  * @return std::string Nickname
 */
-void Client::setUser(std::string user)
+void Client::setUser(std::string const &user)
 {
 	_user = user;
 }
@@ -395,4 +367,25 @@ void Client::setRealName(std::string real_name)
 std::string Client::getRealName()
 {
 	return _real_name;
+}
+
+/**
+ * @brief Set the Password Verified object
+ * 
+ * @param password_verified If the password was verified
+*/
+void Client::setPasswordVerified(bool password_verified)
+{
+	_passwordVerified = password_verified;
+}
+
+/**
+ * @brief Get the Password Verified object
+ * 
+ * @return true If the password was verified
+ * @return false If the password was not verified
+*/
+bool Client::getPasswordVerified()
+{
+	return _passwordVerified;
 }
