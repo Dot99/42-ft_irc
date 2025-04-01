@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/31 14:43:53 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/01 08:56:58 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 
 /**
  * @brief Construct a new IrcServer object
- * 
+ *
  * @param args Arguments
  */
 IrcServer::IrcServer(char **argv, int argc)
@@ -28,7 +28,7 @@ IrcServer::IrcServer(char **argv, int argc)
 
 /**
  * @brief Copy assignment operator
- * 
+ *
  * @param rhs IrcServer object to copy
  * @return IrcServer& Reference to the current object
  */
@@ -50,7 +50,7 @@ IrcServer &IrcServer::operator=(const IrcServer &rhs)
 
 /**
  * @brief Destroy the IrcServer object
- * 
+ *
  */
 IrcServer::~IrcServer()
 {
@@ -74,9 +74,9 @@ IrcServer::~IrcServer()
 		}
 	}
 	_channels.clear();
-    _args.clear();
-    std::vector<std::string>().swap(_args);
-	for(size_t i = 0; i < _poll_fds.size(); i++)
+	_args.clear();
+	std::vector<std::string>().swap(_args);
+	for (size_t i = 0; i < _poll_fds.size(); i++)
 	{
 		if (_poll_fds[i].fd != -1)
 			close(_poll_fds[i].fd);
@@ -88,18 +88,18 @@ IrcServer::~IrcServer()
 
 /**
  * @brief Start the server
- * 
+ *
  */
 void IrcServer::startServer()
 {
 	/*
-	* Create a socket
-	* AF_INET: IPv4
-	* SOCK_STREAM: TCP
-	* 0: Protocol (IP)
-	*/
+	 * Create a socket
+	 * AF_INET: IPv4
+	 * SOCK_STREAM: TCP
+	 * 0: Protocol (IP)
+	 */
 	_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if(_socket < 0)
+	if (_socket < 0)
 	{
 		std::cerr << "Error: Socket creation failed" << std::endl;
 		throw std::exception();
@@ -137,7 +137,7 @@ void IrcServer::startServer()
 
 /**
  * @brief Run the server
- * 
+ *
  */
 void IrcServer::run()
 {
@@ -157,7 +157,7 @@ void IrcServer::run()
 		}
 		for (size_t i = 0; i < _poll_fds.size(); i++)
 		{
-			if (_poll_fds[i].revents & POLLIN) 
+			if (_poll_fds[i].revents & POLLIN)
 			{
 				if (_poll_fds[i].fd == _socket)
 				{
@@ -192,14 +192,14 @@ void IrcServer::run()
 				{
 					getUserFd(_poll_fds[i].fd)->handleClientMessage(_poll_fds[i].fd);
 				}
-			}	
+			}
 		}
 	}
 }
 
 /**
  * @brief Set the arguments
- * 
+ *
  * @param args Arguments
  */
 void IrcServer::setArgs(const std::vector<std::string> &args)
@@ -210,7 +210,7 @@ void IrcServer::setArgs(const std::vector<std::string> &args)
 		std::cerr << "Error: Invalid Port\n";
 		throw std::exception();
 	}
-	if(_port < 0 || _port > 65535)
+	if (_port < 0 || _port > 65535)
 	{
 		std::cerr << "Error: Invalid Port\n";
 		throw std::exception();
@@ -221,21 +221,20 @@ void IrcServer::setArgs(const std::vector<std::string> &args)
 	std::tm *ltm = std::localtime(&now);
 	std::stringstream ss;
 	ss << 1900 + ltm->tm_year << "-"
-		<< 1 + ltm->tm_mon << "-"
-		<< ltm->tm_mday << " "
-		<< ltm->tm_hour << ":"
-		<< ltm->tm_min << ":"
-		<< ltm->tm_sec;
+	   << 1 + ltm->tm_mon << "-"
+	   << ltm->tm_mday << " "
+	   << ltm->tm_hour << ":"
+	   << ltm->tm_min << ":"
+	   << ltm->tm_sec;
 	_now = ss.str();
 }
-
 
 /*---------------------------- COMMANDS ---------------------------- */
 
 /**
  * @brief Command to join a channel
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
@@ -243,12 +242,12 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 	std::string passwd;
 	bool channelExists = false;
 	Channel *channel = NULL;
-	
+
 	iss >> channelName >> passwd;
-	if(channelName.empty())
+	if (channelName.empty())
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
-		return ;
+		return;
 	}
 	channel = checkChannelName(channelName, _channels);
 	if (channel)
@@ -291,13 +290,13 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 		std::string msg;
 		for (size_t i = 0; i < users.size(); ++i)
 		{
-			msg = RPL_JOIN(_user->getNick(),_user->getUser(),_user->getHost(), _user->getChannel()->getName());
+			msg = RPL_JOIN(_user->getNick(), _user->getUser(), _user->getHost(), _user->getChannel()->getName());
 			sendClientMsg(users[i]->getFd(), msg);
 		}
 		std::string user_list;
 		for (size_t i = 0; i < users.size(); ++i)
 		{
-			if(users[i]->getOperator())
+			if (users[i]->getOperator())
 				user_list += "@";
 			user_list += users[i]->getNick();
 			if (i + 1 != users.size())
@@ -313,7 +312,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to leave a channel
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
@@ -321,13 +320,13 @@ void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 	std::string reason;
 
 	iss >> channelName >> reason;
-	if(channelName.empty() && _user->getChannel() == NULL)
+	if (channelName.empty() && _user->getChannel() == NULL)
 	{
 		std::string msg = "PART";
 		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
-		return ;
+		return;
 	}
-	if(channelName.empty() && _user->getChannel() != NULL)
+	if (channelName.empty() && _user->getChannel() != NULL)
 	{
 		_user->getChannel()->removeUser(_user);
 		_user->setChannel(NULL);
@@ -335,20 +334,20 @@ void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 	if (!getChannelByName(channelName))
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
-		return ;
+		return;
 	}
 	if (_user->getChannel() == NULL)
 	{
 		sendClientMsg(client_fd, ERR_NOTONCHANNEL(_user->getNick(), channelName));
-		return ;
+		return;
 	}
 	if (_user->getChannel()->getName() != channelName)
 	{
 		sendClientMsg(client_fd, ERR_NOTONCHANNEL(_user->getNick(), channelName));
-		return ;
+		return;
 	}
 	std::string msg = ":" + _user->getNick() + "!" + _user->getUser() + "@" + _user->getHost() + " PART " + _user->getChannel()->getName();
-	if(!restOfCommand.empty())
+	if (!restOfCommand.empty())
 		msg += " :" + restOfCommand + "\r\n";
 	else
 		msg += "\r\n";
@@ -358,7 +357,7 @@ void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 		sendClientMsg(users[i]->getFd(), msg);
 	_user->getChannel()->removeUser(_user);
 	_user->setChannel(NULL);
-	if(getChannelByName(channelName)->getUsers().size() == 0)
+	if (getChannelByName(channelName)->getUsers().size() == 0)
 	{
 		_channels.erase(std::remove(_channels.begin(), _channels.end(), getChannelByName(channelName)), _channels.end());
 		delete getChannelByName(channelName);
@@ -368,19 +367,19 @@ void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to list all channels
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::listCommand(int client_fd, std::string restOfCommand)
 {
 	sendClientMsg(client_fd, RPL_LISTSTART);
 	std::string msg;
 	std::string clientCount;
-	if(restOfCommand.empty())
+	if (restOfCommand.empty())
 	{
 		for (size_t i = 0; i < _channels.size(); i++)
 		{
 			clientCount = to_string(_channels[i]->getUsers().size());
 			msg = RPL_LIST(_channels[i]->getName(), clientCount, _channels[i]->getTopic());
-			sendClientMsg(client_fd, msg);	
+			sendClientMsg(client_fd, msg);
 		}
 	}
 	else
@@ -391,7 +390,7 @@ void IrcServer::listCommand(int client_fd, std::string restOfCommand)
 			{
 				clientCount = to_string(_channels[i]->getUsers().size());
 				msg = RPL_LIST(_channels[i]->getName(), clientCount, _channels[i]->getTopic());
-				sendClientMsg(client_fd, msg);	
+				sendClientMsg(client_fd, msg);
 			}
 		}
 	}
@@ -401,7 +400,7 @@ void IrcServer::listCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to exit the server
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::exitCommand(int client_fd)
 {
 	_user->getChannel()->removeUser(_user);
@@ -412,7 +411,7 @@ void IrcServer::exitCommand(int client_fd)
 /**
  * @brief Command to kick a user from a channel
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
@@ -421,14 +420,14 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 	std::string message;
 	std::string msg;
 	iss >> channelName >> inputNick >> message;
-	if(_user->getOperator() == false)
+	if (_user->getOperator() == false)
 	{
 		sendClientMsg(client_fd, ERR_CHANOPRIVSNEEDED(channelName));
-		return ;
+		return;
 	}
-	if(inputNick.empty())
+	if (inputNick.empty())
 		sendClientMsg(client_fd, ERR_NONICKNAMEGIVEN);
-	if(_user->getChannel()->getName() == channelName)
+	if (_user->getChannel()->getName() == channelName)
 	{
 		for (size_t i = 0; i < _user->getChannel()->getUsers().size(); i++)
 		{
@@ -457,13 +456,13 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to invite a user to a channel
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
 	std::string nickname;
 	std::string channelName;
-	
+
 	iss >> channelName >> nickname;
 	if (nickname.empty())
 	{
@@ -473,43 +472,42 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 	if (_user->getChannel()->getName() != channelName)
 	{
 		sendClientMsg(client_fd, ERR_NOTONCHANNEL(_user->getNick(), channelName));
-		return ;
+		return;
 	}
 	if (_user->getOperator() == false && _user->getChannel()->getInviteOnly() == true)
 	{
 		sendClientMsg(client_fd, ERR_CHANOPRIVSNEEDED(_user->getChannel()->getName()));
-		return ;
+		return;
 	}
 	if (!getChannelByName(channelName))
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
-		return ;
+		return;
 	}
 	if (!getUserByNick(nickname))
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHNICK(nickname));
-		return ;
+		return;
 	}
 	if (getUserByNick(nickname)->getChannel() && getUserByNick(nickname)->getChannel()->getName() == channelName)
 	{
 		sendClientMsg(client_fd, ERR_USERONCHANNEL(nickname, channelName));
-		return ;
+		return;
 	}
 	_user->getChannel()->addInvitedUser(getUserByNick(nickname));
 	sendClientMsg(client_fd, RPL_INVITING(_user->getNick(), channelName));
 	std::string inputNick = restOfCommand;
-	if(inputNick.empty())
+	if (inputNick.empty())
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHNICK(nickname));
 	}
 	sendClientMsg(getUserByNick(nickname)->getFd(), "INVITE " + _user->getNick() + " " + channelName + "\r\n");
-	
 }
 
 /**
  * @brief Command to set the topic of a channel
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
@@ -518,17 +516,17 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 	iss >> channelName >> inputTopic;
 	if (inputTopic[0] && inputTopic[0] == ':')
 		inputTopic = inputTopic.substr(1);
-	if(_user->getOperator() == false || _user->getChannel() == NULL)
+	if (_user->getOperator() == false || _user->getChannel() == NULL)
 	{
-		if(_user->getChannel()->getTopicProtection())
+		if (_user->getChannel()->getTopicProtection())
 		{
 			sendClientMsg(client_fd, ERR_CHANOPRIVSNEEDED(_user->getChannel()->getName()));
-			return ;
+			return;
 		}
 	}
 	if (inputTopic.empty())
 	{
-		if(_user->getChannel()->getTopic().empty())
+		if (_user->getChannel()->getTopic().empty())
 			sendClientMsg(client_fd, RPL_NOTOPIC(_user->getChannel()->getName()));
 		else
 		{
@@ -543,11 +541,11 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 		std::tm *ltm = std::localtime(&now);
 		std::stringstream ss;
 		ss << 1900 + ltm->tm_year << "-"
-			<< 1 + ltm->tm_mon << "-"
-			<< ltm->tm_mday << " "
-			<< ltm->tm_hour << ":"
-			<< ltm->tm_min << ":"
-			<< ltm->tm_sec;
+		   << 1 + ltm->tm_mon << "-"
+		   << ltm->tm_mday << " "
+		   << ltm->tm_hour << ":"
+		   << ltm->tm_min << ":"
+		   << ltm->tm_sec;
 		std::string tnow = ss.str();
 		_user->getChannel()->setTopicTime(tnow);
 		std::vector<Client *> users = _user->getChannel()->getUsers();
@@ -562,7 +560,7 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to set the mode of a channel
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 {
 	std::string mode = "itkol";
@@ -572,13 +570,13 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 	std::string parameter;
 	std::string msg = "MODE";
 	iss >> target >> inputMode >> parameter;
-	if(_user->getOperator() == false)
+	if (_user->getOperator() == false)
 	{
 		size_t pos = target.find("#");
-		if(pos == std::string::npos || !inputMode.empty())
+		if (pos == std::string::npos || !inputMode.empty())
 		{
 			sendClientMsg(client_fd, ERR_CHANOPRIVSNEEDED(restOfCommand));
-			return ;
+			return;
 		}
 		else
 			sendClientMsg(client_fd, RPL_CHANNELMODEIS(_user->getChannel()->getName(), "+-", mode));
@@ -586,38 +584,38 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 	else // If user operator
 	{
 		restOfCommand = clean_input(restOfCommand, ENTER);
-		if(restOfCommand.empty())
+		if (restOfCommand.empty())
 		{
 			std::string msg = "MODE";
 			sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
-			return ;
+			return;
 		}
 		else
 		{
 			if (target != _user->getChannel()->getName())
 			{
-				if(getChannelByName(_user->getChannel()->getName()))
+				if (getChannelByName(_user->getChannel()->getName()))
 				{
 					sendClientMsg(client_fd, ERR_CHANOPRIVSNEEDED(_user->getChannel()->getName()));
-					return ;
+					return;
 				}
 				else
 				{
 					sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(_user->getChannel()->getName()));
-					return ;
+					return;
 				}
 			}
 			else
 			{
-				if(inputMode.empty() && !target.empty())
+				if (inputMode.empty() && !target.empty())
 				{
 					sendClientMsg(client_fd, RPL_CHANNELMODEIS(_user->getChannel()->getName(), "+-", mode));
-					return ;
+					return;
 				}
 				if (inputMode.empty())
 				{
 					sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
-					return ;
+					return;
 				}
 				else
 				{
@@ -625,123 +623,122 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 					{
 						std::string signal = "+-";
 						sendClientMsg(client_fd, RPL_CHANNELMODEIS(_user->getChannel()->getName(), signal, mode));
-						return ;
+						return;
 					}
 					else
 					{
 						if (inputMode[1] != 'i' && inputMode[1] != 't' && inputMode[1] != 'k' && inputMode[1] != 'o' && inputMode[1] != 'l')
 						{
 							sendClientMsg(client_fd, ERR_UNKNOWNMODE(inputMode));
-							return ;
+							return;
 						}
 						else
 						{
 							int i = 0;
-							for(; i < 5; i++)
+							for (; i < 5; i++)
 								if (inputMode[1] == mode[i])
 									break;
 							switch (i)
 							{
-								case 0: //i (Set/remove Invite-only channel)
-									if(inputMode[0] == '+')
+							case 0: // i (Set/remove Invite-only channel)
+								if (inputMode[0] == '+')
+								{
+									_user->getChannel()->setInviteOnly(true);
+									std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +i \r\n";
+									sendClientMsg(client_fd, msg);
+								}
+								else
+								{
+									_user->getChannel()->setInviteOnly(false);
+									std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " -i \r\n";
+									sendClientMsg(client_fd, msg);
+								}
+								break;
+							case 1: // t (Set/remove the restrictions of the TOPIC command to channel operators)
+								if (inputMode[0] == '+')
+								{
+									_user->getChannel()->setTopicProtection(true);
+									std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +t \r\n";
+									sendClientMsg(client_fd, msg);
+								}
+								else
+								{
+									_user->getChannel()->setTopicProtection(false);
+									std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " -t \r\n";
+									sendClientMsg(client_fd, msg);
+								}
+								break;
+							case 2: // k (Set/remove the channel key)
+								if (parameter.empty() && inputMode[0] == '+')
+								{
+									sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
+									return;
+								}
+								else if (inputMode[0] == '+')
+								{
+									_user->getChannel()->setPassword(parameter);
+									std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +k " + parameter + "\r\n";
+									sendClientMsg(client_fd, msg);
+								}
+								else
+								{
+									_user->getChannel()->setPassword("");
+									std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " -k " + parameter + "\r\n";
+									sendClientMsg(client_fd, msg);
+								}
+								break;
+							case 3: // o (Set/remove a user as channel operator)
+								if (parameter.empty())
+								{
+									sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
+									return;
+								}
+								else
+								{
+									if (getUserByNick(parameter) == NULL)
 									{
-										_user->getChannel()->setInviteOnly(true);
-										std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +i \r\n";
-										sendClientMsg(client_fd, msg);
+										sendClientMsg(client_fd, ERR_NOSUCHNICK(parameter));
+										return;
 									}
 									else
 									{
-										_user->getChannel()->setInviteOnly(false);
-										std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " -i \r\n";
-										sendClientMsg(client_fd, msg);
-									}
-									break;
-								case 1: //t (Set/remove the restrictions of the TOPIC command to channel operators)
-									if(inputMode[0] == '+')
-									{
-										_user->getChannel()->setTopicProtection(true);
-										std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +t \r\n";
-										sendClientMsg(client_fd, msg);
-									}
-									else
-									{
-										_user->getChannel()->setTopicProtection(false);
-										std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " -t \r\n";
-										sendClientMsg(client_fd, msg);
-									}
-									break;
-								case 2: //k (Set/remove the channel key)
-									if (parameter.empty() && inputMode[0] == '+')
-									{
-										sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
-										return ;
-									}
-									else
-										if(inputMode[0] == '+')
+										if (inputMode[0] == '+')
 										{
-											_user->getChannel()->setPassword(parameter);
-											std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +k " + parameter + "\r\n";
-											sendClientMsg(client_fd, msg);
+											getUserByNick(parameter)->setOperator(true);
+											std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +o " + parameter + "\r\n";
+											for (size_t i = 0; i < _user->getChannel()->getUsers().size(); i++)
+												sendClientMsg(_user->getChannel()->getUsers()[i]->getFd(), msg);
 										}
 										else
 										{
-											_user->getChannel()->setPassword("");
-											std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " -k " + parameter + "\r\n";
-											sendClientMsg(client_fd, msg);
+											getUserByNick(parameter)->setOperator(false);
+											std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " -o " + parameter + "\r\n";
+											for (size_t i = 0; i < _user->getChannel()->getUsers().size(); i++)
+												sendClientMsg(_user->getChannel()->getUsers()[i]->getFd(), msg);
 										}
-									break;
-								case 3: //o (Set/remove a user as channel operator)
-									if (parameter.empty())
+									}
+								}
+								break;
+							case 4: // l (Set/remove the user limit to channel)
+								if (parameter.empty() && inputMode[0] == '+')
+								{
+									sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
+									return;
+								}
+								else
+								{
+									if (inputMode[0] == '+')
 									{
-										sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
-										return ;
+										_user->getChannel()->setLimit(std::atoi(parameter.c_str()));
+										std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +l " + parameter + "\r\n";
+										sendClientMsg(client_fd, msg);
 									}
 									else
-									{
-										if(getUserByNick(parameter) == NULL)
-										{
-											sendClientMsg(client_fd, ERR_NOSUCHNICK(parameter));
-											return ;
-										}
-										else
-										{
-											if(inputMode[0] == '+')
-											{
-												getUserByNick(parameter)->setOperator(true);
-												std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +o " + parameter + "\r\n";
-												for(size_t i = 0; i < _user->getChannel()->getUsers().size(); i++)
-													sendClientMsg(_user->getChannel()->getUsers()[i]->getFd(), msg);
-											}
-											else
-											{
-												getUserByNick(parameter)->setOperator(false);
-												std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " -o " + parameter + "\r\n";
-												for(size_t i = 0; i < _user->getChannel()->getUsers().size(); i++)
-													sendClientMsg(_user->getChannel()->getUsers()[i]->getFd(), msg);
-											}
-										}
-									}
-									break;
-								case 4: //l (Set/remove the user limit to channel)
-									if (parameter.empty() && inputMode[0] == '+')
-									{
-										sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
-										return ;
-									}
-									else
-									{
-										if(inputMode[0] == '+')
-										{
-											_user->getChannel()->setLimit(std::atoi(parameter.c_str()));
-											std::string msg = ":" + _user->getNick() + " MODE " + _user->getChannel()->getName() + " +l " + parameter + "\r\n";
-											sendClientMsg(client_fd, msg);
-										}
-										else
-											_user->getChannel()->setLimit(0);
-									}
-									break;
-								default:
-									break;
+										_user->getChannel()->setLimit(0);
+								}
+								break;
+							default:
+								break;
 							}
 						}
 					}
@@ -754,10 +751,10 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to set the password of the server
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 {
-	if(restOfCommand != _pwd)
+	if (restOfCommand != _pwd)
 	{
 		sendClientMsg(client_fd, ERR_PASSWDMISMATCH);
 		sendClientMsg(client_fd, "ERROR :Closing Link: Pass: Password incorrect\r\n");
@@ -769,14 +766,14 @@ void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to change the nickname of the user
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 {
 	//_user = getUserFd(client_fd);
-	if (!_user) 
+	if (!_user)
 	{
 		std::cout << "Error: User not found" << std::endl;
-		return ;
+		return;
 	}
 	std::string inputNick = clean_input(restOfCommand, ENTER);
 	std::string msg = checkNick(inputNick, _users);
@@ -787,14 +784,14 @@ void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 		msg = ":" + _user->getNick() + " NICK " + inputNick + "\r\n";
 		sendClientMsg(client_fd, msg);
 	}
-	if(_user->getPasswordVerified())
+	if (_user->getPasswordVerified())
 		_user->setNick(inputNick);
 	else
 	{
 		sendClientMsg(client_fd, "INTRODUCE PASSWORD FIRST -> PASS <password>\r\n");
-		return ;
+		return;
 	}
-	if(_user->getChannel())
+	if (_user->getChannel())
 	{
 		std::vector<Client *> users = _user->getChannel()->getUsers();
 		for (size_t i = 0; i < users.size(); i++)
@@ -803,13 +800,13 @@ void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 			sendClientMsg(users[i]->getFd(), msg);
 		}
 	}
-	return ;
+	return;
 }
 
 /**
  * @brief Command to set the user of the client
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
@@ -817,78 +814,78 @@ void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 	std::string zero;
 	std::string asterisk;
 	std::string realName;
-	
+
 	iss >> user >> zero >> asterisk >> realName;
 	std::string inputUser = restOfCommand;
-	if(user.empty())
+	if (user.empty())
 	{
 		std::string user = "USER";
 		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(user));
-		return ;
+		return;
 	}
-	if(_user->getAuthenticated())
+	if (_user->getAuthenticated())
 	{
 		sendClientMsg(client_fd, ERR_ALREADYREGISTERED);
-		return ;
+		return;
 	}
-	if(!_user->getPasswordVerified())
+	if (!_user->getPasswordVerified())
 	{
 		sendClientMsg(client_fd, "INTRODUCE PASSWORD FIRST -> PASS <password>\r\n");
-		return ;
+		return;
 	}
 	if (user.length() < USERLEN)
 		_user->setUser(user);
 	else
 		_user->setUser(user.substr(0, USERLEN));
-	if(zero.empty() || zero != "0")
+	if (zero.empty() || zero != "0")
 	{
 		std::string zero = "USER";
 		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(zero));
-		return ;
+		return;
 	}
-	if(asterisk.empty() || asterisk != "*")
+	if (asterisk.empty() || asterisk != "*")
 	{
 		std::string asterisk = "USER";
 		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(asterisk));
-		return ;
+		return;
 	}
-	if(realName.empty())
+	if (realName.empty())
 	{
 		std::string realName = "USER";
 		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(realName));
-		return ;
+		return;
 	}
-	if(realName[0] == ':')
+	if (realName[0] == ':')
 		realName = realName.substr(1);
 	_user->setRealName(realName);
-	if (_user->getNick() != "" &&  !_user->getAuthenticated())
+	if (_user->getNick() != "" && !_user->getAuthenticated())
 		_user->setAuthenticated(true);
 }
 
 /**
  * @brief Command to quit the server
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
-{	
-	if(getUserFd(client_fd)->getChannel())
+{
+	if (getUserFd(client_fd)->getChannel())
 	{
 		std::string channelName = getUserFd(client_fd)->getChannel()->getName();
 		std::vector<Client *> users = getUserFd(client_fd)->getChannel()->getUsers();
 		for (size_t i = 0; i < users.size(); i++)
 			sendClientMsg(users[i]->getFd(), getUserFd(client_fd)->getNick() + " is leaving the channel" + getUserFd(client_fd)->getChannel()->getName() + "\n");
 		std::string msg = ":" + getUserFd(client_fd)->getNick() + "!" + getUserFd(client_fd)->getUser() + "@" + getUserFd(client_fd)->getHost() + " PART " + getUserFd(client_fd)->getChannel()->getName();
-		if(!restOfCommand.empty())
+		if (!restOfCommand.empty())
 			msg += " :" + restOfCommand + "\r\n";
 		else
 			msg += "\r\n";
 		sendClientMsg(getUserFd(client_fd)->getFd(), msg);
 		getUserFd(client_fd)->getChannel()->removeUser(getUserFd(client_fd));
 		getUserFd(client_fd)->setChannel(NULL);
-		if(getChannelByName(channelName)->getUsers().empty())
+		if (getChannelByName(channelName)->getUsers().empty())
 		{
-			for(size_t i = 0; i < _channels.size(); i++)
-				if(_channels[i]->getName() == channelName)
+			for (size_t i = 0; i < _channels.size(); i++)
+				if (_channels[i]->getName() == channelName)
 				{
 					delete _channels[i];
 					_channels.erase(_channels.begin() + i);
@@ -896,7 +893,7 @@ void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 				}
 		}
 	}
-	if(restOfCommand.empty())
+	if (restOfCommand.empty())
 		sendClientMsg(client_fd, "ERROR :Closing Link: Quit: Client Quit");
 	else
 		sendClientMsg(client_fd, "ERROR :Closing Link: Quit: " + restOfCommand);
@@ -910,17 +907,17 @@ void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 			break;
 		}
 	}
-	for(size_t i = 0; i < _poll_fds.size(); i++)
+	for (size_t i = 0; i < _poll_fds.size(); i++)
 	{
-		if(_poll_fds[i].fd == client_fd)
+		if (_poll_fds[i].fd == client_fd)
 		{
 			_poll_fds.erase(_poll_fds.begin() + i);
 			break;
 		}
 	}
-	for(size_t i = 0; i < _users.size(); i++)
+	for (size_t i = 0; i < _users.size(); i++)
 	{
-		if(_users[i]->getFd() == client_fd)
+		if (_users[i]->getFd() == client_fd)
 		{
 			_users.erase(_users.begin() + i);
 			break;
@@ -932,36 +929,36 @@ void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to get the list of users in a channel
  * @param client_fd File descriptor of the client
-*/
+ */
 void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
 	std::string channel;
 	iss >> channel;
 
-	if(channel.empty() || channel[0] != '#')
-	{
-		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channel));
-		return ;
-	}
-	if(!getChannelByName(channel))
+	if (channel.empty() || channel[0] != '#')
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channel));
 		return;
 	}
-	for(size_t i = 0; i < getChannelByName(channel)->getUsers().size(); i++)
+	if (!getChannelByName(channel))
+	{
+		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channel));
+		return;
+	}
+	for (size_t i = 0; i < getChannelByName(channel)->getUsers().size(); i++)
 	{
 		std::string flag = "H";
 		if (getChannelByName(channel)->getUsers()[i]->getOperator())
 			flag += " @";
 		std::string msg = RPL_WHOREPLY(
 			SERVER_NAME,
-			getChannelByName(channel)->getUsers()[i]->getNick(),// client (the one issuing WHO)
-			getChannelByName(channel)->getName(),               // channel
-			getChannelByName(channel)->getUsers()[i]->getUser(), // username
-			getChannelByName(channel)->getUsers()[i]->getHost(), // host
-			getChannelByName(channel)->getUsers()[i]->getNick(), // nick
-			flag,                                               // flags
+			getChannelByName(channel)->getUsers()[i]->getNick(),	// client (the one issuing WHO)
+			getChannelByName(channel)->getName(),					// channel
+			getChannelByName(channel)->getUsers()[i]->getUser(),	// username
+			getChannelByName(channel)->getUsers()[i]->getHost(),	// host
+			getChannelByName(channel)->getUsers()[i]->getNick(),	// nick
+			flag,													// flags
 			getChannelByName(channel)->getUsers()[i]->getRealName() // realname
 		);
 		sendClientMsg(client_fd, msg);
@@ -973,80 +970,79 @@ void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
  * @brief Command to parse the command received from the client
  * @param client_fd File descriptor of the client
  * @param command Command received from the client
-*/
+ */
 void IrcServer::parseCommand(int client_fd, std::string command)
 {
 	if (command == "\r\n" || command.empty())
 	{
 		// quitCommand(client_fd, "");
-		return ;
+		return;
 	}
-	std::string commands[14] = {"JOIN", "PART", "LIST", "EXIT", "KICK",  "INVITE", "TOPIC", "MODE", "PASS", "NICK", "USER", "PRIVMSG", "QUIT", "WHO"};
+	std::string commands[14] = {"JOIN", "PART", "LIST", "EXIT", "KICK", "INVITE", "TOPIC", "MODE", "PASS", "NICK", "USER", "PRIVMSG", "QUIT", "WHO"};
 	int i = 0;
 	std::string foundCommand;
 	std::string restOfCommand;
 	_user = getUserFd(client_fd);
-	for(; i < 14; i++)
+	for (; i < 14; i++)
 	{
 		size_t pos = command.find(commands[i]);
-		if(pos != std::string::npos)
+		if (pos != std::string::npos)
 		{
 			foundCommand = commands[i];
 			restOfCommand = command.substr(pos + commands[i].length());
-			if (foundCommand != "INVITE" &&  foundCommand != "USER" && foundCommand != "PART" && foundCommand != "MODE" && foundCommand != "PRIVMSG"
-				&& foundCommand != "TOPIC" && foundCommand != "WHO" && foundCommand != "KICK" && foundCommand != "JOIN")
+			if (foundCommand != "INVITE" && foundCommand != "USER" && foundCommand != "PART" && foundCommand != "MODE" && foundCommand != "PRIVMSG" && foundCommand != "TOPIC" && foundCommand != "WHO" && foundCommand != "KICK" && foundCommand != "JOIN")
 				restOfCommand = clean_input(restOfCommand, SPACES);
 			else
 				restOfCommand = clean_input(restOfCommand, ENTER);
 			break;
 		}
 	}
-	switch(i)
+	switch (i)
 	{
-		case 0:
-			joinCommand(client_fd, restOfCommand);
-			break;
-		case 1:
-			partCommand(client_fd, restOfCommand);
-			break;
-		case 2:
-			listCommand(client_fd, restOfCommand);
-			break;
-		case 3:
-			exitCommand(client_fd);
-			break;
-		case 4:
-			kickCommand(client_fd, restOfCommand);
-			break;
-		case 5:
-			inviteCommand(client_fd, restOfCommand);
-			break;
-		case 6:
-			topicCommand(client_fd, restOfCommand);
-			break;
-		case 7:
-			modeCommand(client_fd, restOfCommand);
-			break;
-		case 8:
-			passCommand(client_fd, restOfCommand);
-			break;
-		case 9:
-			nickCommand(client_fd, restOfCommand);
-			break;
-		case 10:
-			userCommand(client_fd, restOfCommand);
-			break;
-		case 11:
-			_user->handleChannelMessage(client_fd, restOfCommand);
-			break;
-		case 12:
-			quitCommand(client_fd, restOfCommand);
-			break;
-		case 13:
-			whoCommand(client_fd, restOfCommand);
-			break;
-		default:
-			sendClientMsg(client_fd, ERR_UNKNOWNCOMMAND(restOfCommand));
+	case 0:
+		joinCommand(client_fd, restOfCommand);
+		break;
+	case 1:
+		partCommand(client_fd, restOfCommand);
+		break;
+	case 2:
+		listCommand(client_fd, restOfCommand);
+		break;
+	case 3:
+		exitCommand(client_fd);
+		break;
+	case 4:
+		kickCommand(client_fd, restOfCommand);
+		break;
+	case 5:
+		inviteCommand(client_fd, restOfCommand);
+		break;
+	case 6:
+		topicCommand(client_fd, restOfCommand);
+		break;
+	case 7:
+		modeCommand(client_fd, restOfCommand);
+		break;
+	case 8:
+		passCommand(client_fd, restOfCommand);
+		break;
+	case 9:
+		nickCommand(client_fd, restOfCommand);
+		break;
+	case 10:
+		userCommand(client_fd, restOfCommand);
+		break;
+	case 11:
+		_user->handleChannelMessage(client_fd, restOfCommand);
+		break;
+	case 12:
+		quitCommand(client_fd, restOfCommand);
+		break;
+	case 13:
+		whoCommand(client_fd, restOfCommand);
+		break;
+	default:
+		sendClientMsg(client_fd, ERR_UNKNOWNCOMMAND(restOfCommand));
 	}
 }
 
@@ -1054,9 +1050,9 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 
 /**
  * @brief Get the Socket object
- * 
+ *
  * @return int Socket
-*/
+ */
 int IrcServer::getSock() const
 {
 	return (_socket);
@@ -1064,9 +1060,9 @@ int IrcServer::getSock() const
 
 /**
  * @brief Get the Password object
- * 
+ *
  * @return std::string Password
-*/
+ */
 std::string IrcServer::getPwd() const
 {
 	return (_pwd);
@@ -1074,9 +1070,9 @@ std::string IrcServer::getPwd() const
 
 /**
  * @brief Get the Poll Fds object
- * 
+ *
  * @return struct pollfd* Poll Fds
-*/
+ */
 struct pollfd &IrcServer::getPollFds(int i)
 {
 	return (_poll_fds[i]);
@@ -1084,9 +1080,9 @@ struct pollfd &IrcServer::getPollFds(int i)
 
 /**
  * @brief Get the Channels object
- * 
+ *
  * @return std::vector<Channel *> Channels
-*/
+ */
 std::vector<Channel *> IrcServer::getChannels() const
 {
 	return (_channels);
@@ -1094,9 +1090,9 @@ std::vector<Channel *> IrcServer::getChannels() const
 
 /**
  * @brief Get the Users object
- * 
+ *
  * @return std::vector<Client *> Users
-*/
+ */
 std::vector<Client *> IrcServer::getUsers() const
 {
 	return (_users);
@@ -1104,10 +1100,10 @@ std::vector<Client *> IrcServer::getUsers() const
 
 /**
  * @brief Get the Channel By Name object
- * 
+ *
  * @param name Channel name
  * @return Channel* Channel
-*/
+ */
 Channel *IrcServer::getChannelByName(std::string name)
 {
 	for (size_t i = 0; i < _channels.size(); i++)
@@ -1122,10 +1118,10 @@ Channel *IrcServer::getChannelByName(std::string name)
 
 /**
  * @brief Get the User By Nick object
- * 
+ *
  * @param nick Nickname
  * @return Client* User
-*/
+ */
 Client *IrcServer::getUserByNick(std::string nick)
 {
 	for (size_t i = 0; i < _users.size(); i++)
@@ -1140,10 +1136,10 @@ Client *IrcServer::getUserByNick(std::string nick)
 
 /**
  * @brief Get the User Fd object
- * 
+ *
  * @param fd File descriptor
  * @return std::vector<Client *> Users
-*/
+ */
 Client *IrcServer::getUserFd(int fd)
 {
 	if (fd < 0 || _users.size() == 0)
@@ -1158,11 +1154,11 @@ Client *IrcServer::getUserFd(int fd)
 
 /**
  * @brief Set the Poll Fds object
- * 
+ *
  * @param i Index
  * @param fd File descriptor
  * @param revents Events
-*/
+ */
 void IrcServer::setPollFds(int i, int fd, short int revents)
 {
 	_poll_fds[i].fd = fd;
@@ -1171,9 +1167,9 @@ void IrcServer::setPollFds(int i, int fd, short int revents)
 
 /**
  * @brief Set the Password object
- * 
+ *
  * @param pwd Password
-*/
+ */
 void IrcServer::setPwd(std::string const &pwd)
 {
 	_pwd = pwd;
@@ -1181,20 +1177,19 @@ void IrcServer::setPwd(std::string const &pwd)
 
 /**
  * @brief Set the Client object
- * 
+ *
  * @param client Client
-*/
+ */
 void IrcServer::addChannel(Channel *channel)
 {
 	_channels.push_back(channel);
-
 }
 
 /**
  * @brief Set the Client object
- * 
+ *
  * @param client Client
-*/
+ */
 void IrcServer::addUser(Client *client)
 {
 	_users.push_back(client);
@@ -1202,9 +1197,9 @@ void IrcServer::addUser(Client *client)
 
 /**
  * @brief Set the Client object
- * 
+ *
  * @param client Client
-*/
+ */
 void IrcServer::removeUser(Client *client)
 {
 	for (size_t i = 0; i < _users.size(); i++)
