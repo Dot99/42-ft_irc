@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/01 08:56:58 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/01 13:54:37 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -249,6 +249,9 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
 		return;
 	}
+	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
+	if(channelName[0] && channelName[0] != '#')
+		channelName = "#" + channelName;
 	channel = checkChannelName(channelName, _channels);
 	if (channel)
 		channelExists = true;

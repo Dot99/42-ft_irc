@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/31 10:33:43 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/01 13:51:49 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -261,15 +261,15 @@ std::string checkNick(const std::string& nick, std::vector<Client *> &users)
  */
 Channel *checkChannelName(const std::string& channelName, std::vector<Channel *> &channels)
 {
-	std::string lowercaseNick = channelName;
-	std::transform(lowercaseNick.begin(), lowercaseNick.end(), lowercaseNick.begin(), ::tolower);
+	std::string lowerCasechannelName = channelName;
+	std::transform(lowerCasechannelName.begin(), lowerCasechannelName.end(), lowerCasechannelName.begin(), ::tolower);
 
 	for (size_t i = 0; i < channels.size(); i++)
 	{
-		std::string existingNick = channels[i]->getName();
-		std::transform(existingNick.begin(), existingNick.end(), existingNick.begin(), ::tolower);
+		std::string existingChannel = channels[i]->getName();
+		std::transform(existingChannel.begin(), existingChannel.end(), existingChannel.begin(), ::tolower);
 
-		if (existingNick == lowercaseNick)
+		if (existingChannel == lowerCasechannelName)
 			return channels[i];
 	}
 	return NULL;
