@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/01 13:54:37 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/01 14:19:11 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -252,10 +252,15 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	if(channelName[0] && channelName[0] != '#')
 		channelName = "#" + channelName;
+	if(_user->getChannel() && _user->getChannel()->getName() == channelName)
+	{
+		sendClientMsg(client_fd, ERR_USERONCHANNEL(_user->getNick(), channelName));
+		return;
+	}
 	channel = checkChannelName(channelName, _channels);
 	if (channel)
 		channelExists = true;
-	if (channelExists && _user->getChannel() == NULL)
+	if (channelExists)
 	{
 		// Check invite-only and password conditions
 		if (channel->getInviteOnly() && !_user->getOperator() && !channel->getInvitedUser(client_fd))
@@ -273,7 +278,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 			sendClientMsg(client_fd, ERR_PASSWDMISMATCH);
 			return;
 		}
-
+		
 		// Add user to channel
 		channel->addUser(_user);
 		_user->setChannel(channel);
@@ -595,6 +600,8 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 		}
 		else
 		{
+			if(target[0] && target[0] != '#')
+				target = "#" + target;
 			if (target != _user->getChannel()->getName())
 			{
 				if (getChannelByName(_user->getChannel()->getName()))
