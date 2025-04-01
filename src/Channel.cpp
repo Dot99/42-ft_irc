@@ -33,9 +33,9 @@ Channel::~Channel()
 {
 	for (size_t i = 0; i < _users.size(); i++)
 	{
-		if(_users[i])
+		if (_users[i])
 		{
-			removeUser(_users[i]);
+			delete _users[i];
 			_users[i] = NULL;
 		}
 	}

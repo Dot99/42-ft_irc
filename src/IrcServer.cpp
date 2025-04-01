@@ -100,16 +100,12 @@ void IrcServer::startServer()
 	 */
 	_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (_socket < 0)
-	{
-		std::cerr << "Error: Socket creation failed" << std::endl;
-		throw std::exception();
-	}
+		throw std::runtime_error("Error: Socket creation failed");
 	int opt = 1;
 	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
 	{
-		std::cerr << "Error: Setsockopt failed" << std::endl;
+		throw std::runtime_error("Error: Setsockopt failed");
 		close(_socket);
-		throw std::exception();
 	}
 	// Bind the socket to an IP / port
 	// sockaddr_in is a structure containing an internet address
@@ -122,15 +118,13 @@ void IrcServer::startServer()
 	_server_addr.sin_addr.s_addr = INADDR_ANY;
 	if (bind(_socket, (sockaddr *)&_server_addr, sizeof(_server_addr)))
 	{
-		std::cerr << "Error: Bind failed" << std::endl;
 		close(_socket);
-		throw std::exception();
+		throw std::runtime_error("Error: Bind failed");
 	}
 	if (listen(_socket, 5) < 0)
 	{
-		std::cerr << "Error: Listen failed" << std::endl;
 		close(_socket);
-		throw std::exception();
+		throw std::runtime_error("Error: Listen failed");
 	}
 	std::cout << "Server started on port: " << _port << std::endl;
 }
@@ -175,6 +169,7 @@ void IrcServer::run()
 					newPoll.events = POLLIN;
 					newPoll.revents = 0;
 					_poll_fds.push_back(newPoll);
+					std::cout << "Client fd: " << client_fd << std::endl;
 					if (!getUserFd(client_fd)->getNick().empty() && !getUserFd(client_fd)->getUser().empty() && getUserFd(client_fd)->getAuthenticated() && !getUserFd(client_fd)->getWelcomeSent())
 					{
 						sendClientMsg(client_fd, "CAP * LS\r\n");
@@ -190,6 +185,8 @@ void IrcServer::run()
 				}
 				else
 				{
+					std::cout << "Client fd: " << _poll_fds[i].fd << std::endl;
+					std::cout << "client by fd" << getUserFd(_poll_fds[i].fd)->getNick() << std::endl;
 					getUserFd(_poll_fds[i].fd)->handleClientMessage(_poll_fds[i].fd);
 				}
 			}
@@ -206,15 +203,9 @@ void IrcServer::setArgs(const std::vector<std::string> &args)
 {
 	std::istringstream iss(args[1]);
 	if (!(iss >> _port))
-	{
-		std::cerr << "Error: Invalid Port\n";
-		throw std::exception();
-	}
+		throw std::runtime_error("Error: Invalid Port");
 	if (_port < 0 || _port > 65535)
-	{
-		std::cerr << "Error: Invalid Port\n";
-		throw std::exception();
-	}
+		throw std::runtime_error("Error: Invalid Port");
 	setPwd(args[2]);
 	// Get current time
 	std::time_t now = std::time(0);
@@ -255,7 +246,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 	channel = checkChannelName(channelName, _channels);
 	if (channel)
 		channelExists = true;
-	if (channelExists && _user->getChannel() == NULL)
+	if (channelExists)
 	{
 		// Check invite-only and password conditions
 		if (channel->getInviteOnly() && !_user->getOperator() && !channel->getInvitedUser(client_fd))

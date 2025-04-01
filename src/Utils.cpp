@@ -143,10 +143,7 @@ std::string readLine(int client_fd, unsigned long max_length) {
 void sendClientMsg(int client_fd, std::string msg)
 {
 	if (send(client_fd, msg.c_str(), msg.length(), 0) == -1)
-	{
-		std::cerr << "Error sending response" << std::endl;
-		throw std::exception();
-	}
+		throw std::runtime_error("Error sending response");
 	std::cout << "Sent to client[" << client_fd << "]: " << msg;
 }
 

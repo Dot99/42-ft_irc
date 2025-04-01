@@ -143,6 +143,7 @@ int Client::acceptClient(int client_fd)
 		return(-1);
 	}
 	setHost(std::string(inet_ntoa(_client_adrr.sin_addr)));
+	std::cout << "power guido" << std::endl;
 	setFd(client_fd);
 	std::string input = readLine(client_fd, 512);
 	if(input.empty() || input.find("CAP LS") == std::string::npos)
