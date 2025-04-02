@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/02 10:16:51 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/02 11:17:33 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -895,12 +895,17 @@ void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 		for (size_t i = 0; i < channels.size(); i++)
 		{
 			Channel *channel = getChannelByName(channels[i]->getName());
+			if(!channel)
+				continue;
 			for (size_t j = 0; j < channels[i]->getUsers().size(); j++)
 			{
 				std::vector<Client *> users = channels[i]->getUsers();
 				std::string msg = ":" + getUserFd(client_fd)->getNick() + "!" + getUserFd(client_fd)->getUser() + "@" + getUserFd(client_fd)->getHost() + " PART " + channel->getName();
 				for(size_t z = 0; z < users.size(); z++)
-				 	sendClientMsg(users[i]->getFd(), getUserFd(client_fd)->getNick() + " is leaving the channel" + channel->getName() + "\n");
+				{
+					if(users[z] && users[z]->getFd() != client_fd)
+						sendClientMsg(users[i]->getFd(), getUserFd(client_fd)->getNick() + " is leaving the channel" + channel->getName() + "\n");
+				}
 				if(!restOfCommand.empty())
 					msg += " :" + restOfCommand + "\r\n";
 				else

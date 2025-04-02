@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/01 13:51:49 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/02 11:22:17 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,9 +142,28 @@ std::string readLine(int client_fd, unsigned long max_length) {
  */
 void sendClientMsg(int client_fd, std::string msg)
 {
-	if (send(client_fd, msg.c_str(), msg.length(), 0) == -1)
-		throw std::runtime_error("Error sending response");
-	std::cout << "Sent to client[" << client_fd << "]: " << msg;
+    try
+    {
+        if (client_fd < 0)
+        {
+            throw std::runtime_error("Invalid client_fd: " + to_string(client_fd));
+        }
+        if (msg.empty())
+        {
+            throw std::runtime_error("Attempted to send an empty message to client_fd: " + to_string(client_fd));
+        }
+
+        // Log the message being sent
+		std::cout << "Sent to client[" << client_fd << "]: " << msg;
+
+        // Send the message
+        send(client_fd, msg.c_str(), msg.length(), 0);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Error in sendClientMsg: " << e.what() << std::endl;
+        throw; // Re-throw the exception to propagate it
+    }
 }
 
 /**
