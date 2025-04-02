@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/02 10:09:00 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/02 13:00:03 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,10 +83,11 @@ void Client::handleChannelMessage(int client_fd, const std::string restOfCommand
 	else
 		Name = restOfCommand.substr(0, msgPos);
 	message = restOfCommand.substr(msgPos + 1);
-    if (message.empty()){
+	if (message.empty()){
 		return;
 	}
 	Name = clean_input(Name, SPACES);
+	std::transform(Name.begin(), Name.end(), Name.begin(), ::tolower);
 	msg = ":" + getNick() + " PRIVMSG " + Name + " :" + message + "\r\n";
 	if (isCHannel)
 	{
@@ -120,18 +121,36 @@ void Client::handleChannelMessage(int client_fd, const std::string restOfCommand
 */
 void Client::handleClientMessage(int client_fd)
 {
+	static std::map<int, std::string> partialBuffers; // Store partial input for each client
 	char buffer[1024];
 	int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
-	if (bytes_received < 0)
+
+	if (bytes_received < 0) // Error in receiving
+	{
+		std::cerr << "Error receiving data from client " << client_fd << "." << std::endl;
+		return;
+	}
+	else if (bytes_received == 0) // Client disconnected
 	{
 		std::cout << "Client " << client_fd << " disconnected." << std::endl;
 		close(client_fd);
 		removeClient(client_fd);
-		close(_server.getSock());
 		return;
 	}
-	buffer[bytes_received] = '\0';
-	_server.parseCommand(client_fd, buffer);
+
+	buffer[bytes_received] = '\0'; // Null-terminate the buffer
+	partialBuffers[client_fd] += buffer; // Append received data to the client's partial buffer
+
+	size_t newlinePos;
+	while ((newlinePos = partialBuffers[client_fd].find('\n')) != std::string::npos)
+	{
+		// Extract the complete command up to the newline
+		std::string command = partialBuffers[client_fd].substr(0, newlinePos);
+		partialBuffers[client_fd].erase(0, newlinePos + 1); // Remove the processed command
+
+		// Process the complete command
+		_server.parseCommand(client_fd, command.c_str());
+	}
 }
 
 /**
@@ -149,7 +168,6 @@ int Client::acceptClient(int client_fd)
 		return(-1);
 	}
 	setHost(std::string(inet_ntoa(_client_adrr.sin_addr)));
-	std::cout << "power guido" << std::endl;
 	setFd(client_fd);
 	std::string input = readLine(client_fd, 512);
 	if(input.empty() || input.find("CAP LS") == std::string::npos)

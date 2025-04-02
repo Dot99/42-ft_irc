@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/17 14:50:27 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/02 09:03:49 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/02 14:11:21 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,8 @@
 #define ERR_UNKNOWNMODE(mode) ("472 " + mode + " :is unknown mode char to me\n")
 
 #define ERR_INVITEONLYCHAN(channel) ("473 " + channel + " :Cannot join channel (+i)\r\n")
+
+#define ERR_BADCHANMASK(channel) ("476 " + channel + " :Bad Channel Mask\n")
 
 #define ERR_CHANOPRIVSNEEDED(channel) ("482 " + channel + " :You're not channel operator\n")
 /*-----------------------------*/
