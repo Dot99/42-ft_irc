@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/31 14:34:29 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/02 10:09:00 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,6 @@ Client::Client(IrcServer &server) : _server(server)
 {
 	_isAuthenticated = false;
 	_isOperator = false;
-	_channel = NULL;
 	_welcome_sent = false;
 	_passwordVerified = false;
 };
@@ -31,11 +30,11 @@ Client::Client(IrcServer &server) : _server(server)
 */
 Client::~Client()
 {
-	if (_channel)
+	for(size_t i = 0; i < _channels.size(); i++)
 	{
-		_channel->removeUser(this);
-		_channel = NULL;
+		_channels[i]->removeUser(this);
 	}
+	_channels.clear();
 	if(fd >= 0)
 	{
 		close(fd);
@@ -84,18 +83,25 @@ void Client::handleChannelMessage(int client_fd, const std::string restOfCommand
 	else
 		Name = restOfCommand.substr(0, msgPos);
 	message = restOfCommand.substr(msgPos + 1);
-    if (message.empty() || !_channel){
+    if (message.empty()){
 		return;
 	}
 	Name = clean_input(Name, SPACES);
 	msg = ":" + getNick() + " PRIVMSG " + Name + " :" + message + "\r\n";
 	if (isCHannel)
 	{
-		std::vector<Client *> users = _channel->getUsers();
-		for (size_t i = 0; i < users.size(); i++)
+		for(size_t i = 0; i < _channels.size(); i++)
 		{
-			if (users[i]->getFd() != client_fd)
-				sendClientMsg(users[i]->getFd(), msg.c_str());
+			if (_channels[i]->getName() == Name)
+			{
+				std::vector<Client *> users = _channels[i]->getUsers();
+				for (size_t j = 0; j < users.size(); j++)
+				{
+					if (users[j]->getFd() != client_fd)
+						sendClientMsg(users[j]->getFd(), msg.c_str());
+				}
+			}
+			return;
 		}
 	}
 	else
@@ -242,19 +248,22 @@ void Client::setFd(int fd)
  * 
  * @param channel Channel
 */
-void Client::setChannel(Channel *channel)
+void Client::addChannel(Channel *channel)
 {
-	_channel = channel;
+	if(std::find(_channels.begin(), _channels.end(), channel) == _channels.end())
+	{
+		_channels.push_back(channel);
+	}
 }
 
 /**
- * @brief Get the Channel object
+ * @brief Remove the Channel object
  * 
- * @return Channel* Channel
+ * @param Channel Channel
 */
-Channel *Client::getChannel()
+void Client::removeChannel(Channel *Channel)
 {
-	return _channel;
+	_channels.erase(std::remove(_channels.begin(), _channels.end(), Channel), _channels.end());
 }
 
 /**

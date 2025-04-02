@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:25:36 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/31 12:47:42 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/02 08:54:45 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ class Client
 {
 	private:
 		IrcServer &_server;
-		Channel *_channel;
+		std::vector<Channel *> _channels;
 		int fd;
 		std::string _nick;
 		std::string _user;
@@ -46,7 +46,8 @@ class Client
 		void setRealName(std::string real_name);
 		void setHost(std::string host);
 		void setFd(int fd);
-		void setChannel(Channel *channel);
+		void addChannel(Channel *channel);
+		void removeChannel(Channel *channel);
 		void setWelcomeSent(bool welcome_sent);
 		void setPasswordVerified(bool password_verified);
 		bool getPasswordVerified();
