@@ -399,3 +399,13 @@ bool Client::getPasswordVerified()
 {
 	return _passwordVerified;
 }
+
+/**
+ * @brief Get the Channels object
+ * 
+ * @return std::vector<Channel *> Channels
+*/
+std::vector<Channel *> Client::getChannels()
+{
+	return _channels;
+}

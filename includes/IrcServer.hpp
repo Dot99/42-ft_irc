@@ -66,4 +66,5 @@ class IrcServer
 		Channel * getChannelByName(std::string name);
 		Client * getUserByNick(std::string nick);
 		Client * getUserFd(int fd);
+		void removeChannelByName(std::string const &name);
 };

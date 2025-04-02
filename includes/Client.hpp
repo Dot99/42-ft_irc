@@ -50,6 +50,7 @@ class Client
 		void removeChannel(Channel *channel);
 		void setWelcomeSent(bool welcome_sent);
 		void setPasswordVerified(bool password_verified);
+		std::vector<Channel *> getChannels();
 		bool getPasswordVerified();
 		bool getWelcomeSent();
 		std::string getNick();

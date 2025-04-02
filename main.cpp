@@ -16,6 +16,8 @@ IrcServer *server = NULL;
 
 void signalHandler(int signum)
 {
+	if (signum == SIGPIPE)
+		return;
 	if (server)
 	{
 		delete server;
@@ -28,17 +30,18 @@ int main(int argc, char **argv)
 {
 	if (checkArgs(argc, argv))
 		return(1);
-	try
-	{
+	// try
+	// {
 		signal(SIGINT, signalHandler);
 		signal(SIGQUIT, signalHandler);
+		signal(SIGPIPE, signalHandler);
 		server = new IrcServer(argv, argc);
 		server->run();
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << '\n';
-		return 1;
-	}
+	// }
+	// catch(const std::exception& e)
+	// {
+	// 	std::cerr << e.what() << '\n';
+	// 	return 1;
+	// }
 	return (0);
 }
