@@ -187,8 +187,6 @@ void IrcServer::run()
 				}
 				else
 				{
-					std::cout << "Client fd: " << _poll_fds[i].fd << std::endl;
-					std::cout << "client by fd" << getUserFd(_poll_fds[i].fd)->getNick() << std::endl;
 					getUserFd(_poll_fds[i].fd)->handleClientMessage(_poll_fds[i].fd);
 				}
 			}
