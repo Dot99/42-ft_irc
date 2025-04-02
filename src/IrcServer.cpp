@@ -171,7 +171,6 @@ void IrcServer::run()
 					newPoll.events = POLLIN;
 					newPoll.revents = 0;
 					_poll_fds.push_back(newPoll);
-					std::cout << "Client fd: " << client_fd << std::endl;
 					if (!getUserFd(client_fd)->getNick().empty() && !getUserFd(client_fd)->getUser().empty() && getUserFd(client_fd)->getAuthenticated() && !getUserFd(client_fd)->getWelcomeSent())
 					{
 						sendClientMsg(client_fd, "CAP * LS\r\n");
@@ -242,7 +241,10 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 	}
 	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	if(channelName[0] && channelName[0] != '#')
-		channelName = "#" + channelName;
+	{
+		sendClientMsg(client_fd, ERR_BADCHANMASK(channelName));
+		return;
+	}
 	for (size_t i = 0; i < _user->getChannels().size(); i++)
 	{
 		if (_user->getChannels()[i]->getName() == channelName)
@@ -424,32 +426,44 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 		return;
 	}
 	if (inputNick.empty())
-		sendClientMsg(client_fd, ERR_NONICKNAMEGIVEN);
-	Channel *channel = getChannelByName(channelName);
-	if(channel)
 	{
-		for (size_t i = 0; i < channel->getUsers().size(); i++)
-		{
-			if (channel->getUsers()[i]->getNick() == inputNick)
-			{
-				channel->getUsers()[i]->setOperator(false);
-				channel->getUsers()[i]->addChannel(NULL);
-				channel->removeInvitedUser(channel->getUsers()[i]);
-				if (message.empty())
-					msg = ":" + _user->getNick() + " KICK " + channelName + " " + inputNick + "\r\n";
-				else
-					msg = ":" + _user->getNick() + " KICK " + channelName + " " + inputNick + " :" + message + "\r\n";
-				for (size_t j = 0; j < channel->getUsers().size(); j++)
-				{
-					sendClientMsg(channel->getUsers()[j]->getFd(), msg);
-				}
-				channel->removeUser(channel->getUsers()[i]);
-				break;
-			}
-		}
+		sendClientMsg(client_fd, ERR_NONICKNAMEGIVEN);
+		return;
 	}
-	else
-		sendClientMsg(client_fd, ERR_NOTONCHANNEL(_user->getNick(), channelName));
+    Channel *channel = getChannelByName(channelName);
+    if (!channel)
+    {
+        sendClientMsg(client_fd, ERR_NOTONCHANNEL(_user->getNick(), channelName));
+        return;
+    }
+    Client *userToKick = NULL;
+    for (size_t i = 0; i < channel->getUsers().size(); i++)
+    {
+        if (channel->getUsers()[i]->getNick() == inputNick)
+        {
+            userToKick = channel->getUsers()[i];
+            break;
+        }
+	}
+    if (!userToKick)
+    {
+        sendClientMsg(client_fd, ERR_NOSUCHNICK(inputNick));
+        return;
+    }
+    if (message.empty())
+        msg = ":" + _user->getNick() + " KICK " + channelName + " " + inputNick + "\r\n";
+    else
+        msg = ":" + _user->getNick() + " KICK " + channelName + " " + inputNick + " :" + message + "\r\n";
+
+    for (size_t j = 0; j < channel->getUsers().size(); j++)
+    {
+        sendClientMsg(channel->getUsers()[j]->getFd(), msg);
+    }
+
+    userToKick->setOperator(false);
+    userToKick->removeChannel(channel);
+    channel->removeInvitedUser(userToKick);
+    channel->removeUser(userToKick);
 }
 
 /**
@@ -610,7 +624,10 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 		else
 		{
 			if(target[0] && target[0] != '#')
-				target = "#" + target;
+			{
+				sendClientMsg(client_fd, ERR_BADCHANMASK(target));
+				return;
+			}
 			if (target != channel->getName())
 			{
 				if (getChannelByName(channel->getName()))

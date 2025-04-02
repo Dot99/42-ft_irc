@@ -94,6 +94,8 @@
 
 #define ERR_INVITEONLYCHAN(channel) ("473 " + channel + " :Cannot join channel (+i)\r\n")
 
+#define ERR_BADCHANMASK(channel) ("476 " + channel + " :Bad Channel Mask\n")
+
 #define ERR_CHANOPRIVSNEEDED(channel) ("482 " + channel + " :You're not channel operator\n")
 /*-----------------------------*/
 
