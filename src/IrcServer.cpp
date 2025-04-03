@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/02 17:17:54 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/03 10:32:33 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -664,8 +664,21 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 		arguments.clear();
 		return;
 	}
-	bool positive = arguments[1][0] == '+';
-	for(size_t i = 0; i < arguments[1].length(); i++)
+
+	bool positive = false;
+	bool flag = false;
+	size_t i = 0;
+	if(arguments[1][0] == '+' || arguments[1][0] != '-')
+	{
+		positive = true;
+		if (arguments[1][0] == '+')
+			i++;
+		else
+			flag = true;
+	}
+	else if (arguments[1][0] == '-')
+		i++;
+	for(; i < arguments[1].length(); i++)
 	{
 		if(arguments[1][i] != 'i' && arguments[1][i] != 't' && arguments[1][i] != 'k'
 			&& arguments[1][i] != 'o' && arguments[1][i] != 'l' && arguments[1][i] != '+' && arguments[1][i] != '-')
@@ -711,7 +724,10 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 					if (i + 1 < arguments.size())
 					{
 						channel->setPassword(arguments[i + 1]);
-						msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +k " + arguments[i + 1] + "\r\n";
+						if(!flag)
+							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +k " + arguments[i + 1] + "\r\n";
+						else
+							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +k " + arguments[i + 2] + "\r\n";
 						sendClientMsg(client_fd, msg);
 					}
 					else
@@ -736,7 +752,10 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 						if (targetUser)
 						{
 							targetUser->setOperator(true);
-							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +o " + arguments[i + 1] + "\r\n";
+							if(!flag)
+								msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +o " + arguments[i + 1] + "\r\n";
+							else
+								msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +o " + arguments[i + 2] + "\r\n";
 							sendClientMsg(client_fd, msg);
 						}
 						else
@@ -755,7 +774,10 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 						if (targetUser)
 						{
 							targetUser->setOperator(false);
-							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -o " + arguments[i + 1] + "\r\n";
+							if(!flag)
+								msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -o " + arguments[i + 1] + "\r\n";
+							else
+								msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -o " + arguments[i + 2] + "\r\n";
 							sendClientMsg(client_fd, msg);
 						}
 						else
@@ -775,7 +797,10 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 					if (i + 1 < arguments.size())
 					{
 						channel->setLimit(atoi(arguments[i + 1].c_str()));
-						msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +l " + arguments[i + 1] + "\r\n";
+						if(!flag)
+							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +l " + arguments[i + 1] + "\r\n";
+						else
+							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +l " + arguments[i + 2] + "\r\n";
 						sendClientMsg(client_fd, msg);
 					}
 					else
@@ -786,7 +811,10 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 				else
 				{
 					channel->setLimit(0);
-					msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -l " + arguments[i + 1] + "\r\n";
+					if(!flag)
+						msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -l " + "\r\n";
+					else
+						msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -l " + "\r\n";
 					sendClientMsg(client_fd, msg);
 					positive = true;
 				}
@@ -795,6 +823,7 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 				break;
 		}
 	}
+	arguments.clear();	
 }
 
 /**
