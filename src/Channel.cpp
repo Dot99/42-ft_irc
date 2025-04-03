@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/18 16:28:29 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/28 12:34:23 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/03 15:59:36 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,33 +31,9 @@ Channel::Channel(std::string name)
  */
 Channel::~Channel()
 {
-	for (size_t i = 0; i < _operators.size(); i++)
-	{
-		if (_operators[i] != NULL)
-		{
-			delete _operators[i];
-			_operators.erase(_operators.begin() + i);
-		}
-	}
-	_operators.clear();
-	for (size_t i = 0; i < _users.size(); i++)
-	{
-		if (_users[i] != NULL)
-		{
-			_users.erase(_users.begin() + i);
-		}
-		// delete _users[i];
-	}
-	_users.clear();
-	for (size_t i = 0; i < _invitedUsers.size(); i++)
-	{
-		if (_invitedUsers[i] != NULL)
-		{
-			delete _invitedUsers[i];
-			_invitedUsers.erase(_invitedUsers.begin() + i);
-		}
-	}
-	_invitedUsers.clear();
+    _operators.clear();
+    _users.clear();
+    _invitedUsers.clear();
 }
 
 /**
@@ -159,7 +135,7 @@ void Channel::removeUser(Client *client)
 		if (_users[i] == client)
 		{
 			_users.erase(_users.begin() + i);
-			break;
+			return ;
 		}
 	}
 }

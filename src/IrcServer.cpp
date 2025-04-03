@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/03 10:32:33 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/03 15:59:07 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,36 +56,15 @@ IrcServer &IrcServer::operator=(const IrcServer &rhs)
  */
 IrcServer::~IrcServer()
 {
-	close(_socket);
-	for (size_t i = 0; i < _channels.size(); i++)
-	{
-		if (_channels[i])
-		{
-			delete _channels[i];
-			_channels[i] = NULL;
-		}
-	}
-	_channels.clear();
-	for (size_t i = 0; i < _users.size(); i++)
-	{
-		if (_users[i])
-		{
-			close(_users[i]->getFd());
-			delete _users[i];
-		}
-	}
-	_users.clear();
-	std::vector<Client *>().swap(_users);
-	_args.clear();
-	std::vector<std::string>().swap(_args);
-	for (size_t i = 0; i < _poll_fds.size(); i++)
-	{
-		if (_poll_fds[i].fd != -1)
-			close(_poll_fds[i].fd);
-	}
-	_poll_fds.clear();
-	std::vector<pollfd>().swap(_poll_fds);
-	_now.clear();
+    for (size_t i = 0; i < _users.size(); ++i) {
+        delete _users[i];
+    }
+    _users.clear();
+
+    for (size_t i = 0; i < _channels.size(); ++i) {
+        delete _channels[i];
+    }
+    _channels.clear();
 }
 
 /**
@@ -306,7 +285,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 		addChannel(channel);
 		channel->addUser(_user);
 		_user->addChannel(channel);
-		channel->addOperator(new Client(*_user));
+		channel->addOperator(_user);
 		channel->setTopic("general");
 
 	}
@@ -370,8 +349,8 @@ void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 	_user->removeChannel(channel);
 	if (channel->getUsers().empty())
 	{
-		delete channel;
 		_channels.erase(std::remove(_channels.begin(), _channels.end(), channel), _channels.end());
+		delete channel;
 	}
 }
 

@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/02 13:00:03 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/03 15:47:37 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,20 +25,54 @@ Client::Client(IrcServer &server) : _server(server)
 };
 
 /**
+ * @brief Copy assignment operator
+ * 
+ * @param rhs Client object to copy
+ * @return Client& Reference to the current object
+*/
+Client &Client::operator=(const Client &rhs)
+{
+	if (this != &rhs)
+	{
+		_nick = rhs._nick;
+		_user = rhs._user;
+		_host = rhs._host;
+		_real_name = rhs._real_name;
+		fd = rhs.fd;
+		_welcome_sent = rhs._welcome_sent;
+		_isAuthenticated = rhs._isAuthenticated;
+	}
+	return *this;
+}
+/**
+ * @brief Copy constructor
+ * 
+ * @param src Client object to copy
+*/
+Client::Client(const Client &src) : _server(src._server)
+{
+	_nick = src._nick;
+	_user = src._user;
+	_host = src._host;
+	_real_name = src._real_name;
+	fd = src.fd;
+	_welcome_sent = src._welcome_sent;
+	_isAuthenticated = src._isAuthenticated;
+}
+
+/**
  * @brief Destroy the Client:: Client object 
 */
 Client::~Client()
 {
-	for(size_t i = 0; i < _channels.size(); i++)
-	{
-		_channels[i]->removeUser(this);
-	}
-	_channels.clear();
-	if(fd >= 0)
-	{
-		close(fd);
-		fd = -1;
-	}
+    for (size_t i = 0; i < _channels.size(); i++)
+    {
+        if (_channels[i])
+        {
+            _channels[i]->removeUser(this);
+        }
+    }
+    _channels.clear();
 }
 
 /**
