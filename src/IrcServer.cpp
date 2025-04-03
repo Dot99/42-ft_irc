@@ -738,7 +738,11 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 								msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +o " + arguments[i + 1] + "\r\n";
 							else
 								msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +o " + arguments[i + 2] + "\r\n";
-							sendClientMsg(client_fd, msg);
+							
+							for (size_t j = 0; j < channel->getUsers().size(); j++)
+							{
+								sendClientMsg(channel->getUsers()[j]->getFd(), msg);
+							}
 						}
 						else
 						{
