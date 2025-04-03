@@ -20,7 +20,6 @@
 Client::Client(IrcServer &server) : _server(server)
 {
 	_isAuthenticated = false;
-	_isOperator = false;
 	_welcome_sent = false;
 	_passwordVerified = false;
 };
@@ -285,6 +284,22 @@ void Client::removeChannel(Channel *Channel)
 }
 
 /**
+ * @brief Find a channel by name
+ * 
+ * @param name Channel name
+ * @return int Index of the channel
+*/
+int Client::findChannel(std::string const &name)
+{
+	for (size_t i = 0; i < _channels.size(); i++)
+	{
+		if (_channels[i]->getName() == name)
+			return (i);
+	}
+	return (-1);
+}
+
+/**
  * @brief Get the Client File Descriptor
  * 
  * @return int File Descriptor
@@ -316,16 +331,6 @@ bool Client::getAuthenticated()
 }
 
 /**
- * @brief Set the Operator object
- * 
- * @param op If the client is an operator
-*/
-void Client::setOperator(bool op)
-{
-	_isOperator = op;
-}
-
-/**
  * @brief Set the Welcome Sent object
  * 
  * @param welcome_sent If the welcome message was sent
@@ -344,17 +349,6 @@ void Client::setWelcomeSent(bool welcome_sent)
 bool Client::getWelcomeSent()
 {
 	return (_welcome_sent);
-}
-
-/**
- * @brief Check if the client is an operator
- * 
- * @return true If the client is an operator
- * @return false If the client is not an operator
-*/
-bool Client::getOperator()
-{
-	return (_isOperator);
 }
 
 /**

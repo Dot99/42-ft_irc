@@ -36,6 +36,7 @@ class IrcServer
 		void addChannel(Channel *channel);
 		void addUser(Client *client);
 		void removeUser(Client *client);
+		void removeChannelByName(std::string const &name);
 		void startServer();
 		void run();
 
@@ -66,5 +67,4 @@ class IrcServer
 		Channel * getChannelByName(std::string name);
 		Client * getUserByNick(std::string nick);
 		Client * getUserFd(int fd);
-		void removeChannelByName(std::string const &name);
 };

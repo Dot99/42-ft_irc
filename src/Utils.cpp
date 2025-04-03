@@ -240,6 +240,7 @@ bool wildcardMatch(const std::string &str, const std::string &pattern)
  */
 std::string checkNick(const std::string& nick, std::vector<Client *> &users)
 {
+	std::string existingNick;
 	if (nick.empty())
 		return ERR_NONICKNAMEGIVEN;
 	if (isdigit(nick[0]))
@@ -258,7 +259,8 @@ std::string checkNick(const std::string& nick, std::vector<Client *> &users)
 
 	for (size_t i = 0; i < users.size(); i++)
 	{
-		std::string existingNick = users[i]->getNick();
+		if (users[i])
+			existingNick = users[i]->getNick();
 		std::transform(existingNick.begin(), existingNick.end(), existingNick.begin(), ::tolower);
 
 		if (existingNick == lowercaseNick)

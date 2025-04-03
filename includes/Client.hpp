@@ -25,7 +25,6 @@ class Client
 		std::string _real_name;
 		bool _welcome_sent;
 		bool _isAuthenticated;
-		bool _isOperator;
 		bool _passwordVerified;
 		struct sockaddr_in _client_adrr;
 	public:
@@ -37,10 +36,9 @@ class Client
 		void handleChannelMessage(int client_fd, const std::string buffer);
 		void handleClientMessage(int client_fd);
 		void removeClient(int client_fd);
-
+		int findChannel(std::string const &name);
 		//-----------------GETTERS/SETTERS-----------------//
 		void setAuthenticated(bool auth);
-		void setOperator(bool op);
 		void setUser(std::string const &user);
 		void setNick(std::string nick);
 		void setRealName(std::string real_name);
@@ -56,7 +54,6 @@ class Client
 		std::string getNick();
 		std::string getUser();
 		bool getAuthenticated();
-		bool getOperator();
 		int getFd();
 		std::string getHost();
 		Channel *getChannel();

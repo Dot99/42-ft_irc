@@ -31,33 +31,55 @@ Channel::Channel(std::string name)
  */
 Channel::~Channel()
 {
-	for (size_t i = 0; i < _users.size(); i++)
-	{
-		if (_users[i])
-		{
-			delete _users[i];
-			_users[i] = NULL;
-		}
-	}
-	_users.clear();
 	for (size_t i = 0; i < _operators.size(); i++)
 	{
-		if(_operators[i])
+		if (_operators[i] != NULL)
 		{
 			delete _operators[i];
-			_operators[i] = NULL;
+			_operators.erase(_operators.begin() + i);
 		}
 	}
 	_operators.clear();
+	for (size_t i = 0; i < _users.size(); i++)
+	{
+		if (_users[i] != NULL)
+		{
+			_users.erase(_users.begin() + i);
+		}
+		// delete _users[i];
+	}
+	_users.clear();
 	for (size_t i = 0; i < _invitedUsers.size(); i++)
 	{
-		if(_invitedUsers[i])
+		if (_invitedUsers[i] != NULL)
 		{
 			delete _invitedUsers[i];
-			_invitedUsers[i] = NULL;
+			_invitedUsers.erase(_invitedUsers.begin() + i);
 		}
 	}
 	_invitedUsers.clear();
+}
+
+/**
+ * @brief Add a channel to the server
+ *
+ * @param client_fd the client_fd
+ */
+int Channel::isOperator(int client_fd)
+{
+	for (size_t i = 0; i < _users.size(); i++)
+	{
+		if (_users[i]->getFd() == client_fd)
+		{
+			for (size_t j = 0; j < _operators.size(); j++)
+			{
+				if (_operators[j]->getFd() == client_fd)
+					return 1;
+			}
+			return 0;
+		}
+	}
+	return 0;
 }
 
 /**
@@ -118,6 +140,7 @@ void Channel::removeOperator(Client *client)
 	{
 		if (_operators[i] == client)
 		{
+			// delete _operators[i];
 			_operators.erase(_operators.begin() + i);
 			break;
 		}

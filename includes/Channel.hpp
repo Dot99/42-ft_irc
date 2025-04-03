@@ -18,6 +18,7 @@ class Channel
     public:
         Channel(std::string name);
         ~Channel();
+		int isOperator(int client_fd);
         void addUser(Client *client);
 		void addOperator(Client *client);
 		void addInvitedUser(Client *client);
