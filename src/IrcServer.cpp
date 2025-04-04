@@ -434,7 +434,7 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 	std::string nickname;
 	std::string channelName;
 
-	iss >> channelName >> nickname;
+	iss >> nickname >> channelName;
 	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	if (nickname.empty())
 	{
@@ -462,9 +462,9 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 		sendClientMsg(client_fd, ERR_NOSUCHNICK(nickname));
 		return;
 	}
-	for(size_t i = 0; i < _channels.size(); i++)
+	for(size_t i = 0; i < getUserByNick(nickname)->getChannels().size(); i++)
 	{
-		if (_channels[i]->getName() == channelName)
+		if (getUserByNick(nickname)->getChannels()[i]->getName() == channelName)
 		{
 			sendClientMsg(client_fd, ERR_USERONCHANNEL(nickname, channelName));
 			return;
@@ -1019,12 +1019,14 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 			foundCommand = commands[i];
 			restOfCommand = command.substr(pos + commands[i].length());
 			if (foundCommand == "PASS" || foundCommand == "QUIT" || foundCommand == "NICK")
-				restOfCommand = clean_input(restOfCommand, ENTER);
-			else
 				restOfCommand = clean_input(restOfCommand, SPACES);
+			else
+				restOfCommand = clean_input(restOfCommand, ENTER);
 			break;
 		}
 	}
+	std::cout << "ResOfCommand:[" << restOfCommand << "]" << std::endl;
+	std::cout << "Found command: " << foundCommand << std::endl;
 	switch (i)
 	{
 	case 0:
