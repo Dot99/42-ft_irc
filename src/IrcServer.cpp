@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/04 11:25:26 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/04 11:42:00 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -237,12 +237,12 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 	Channel *channel = NULL;
 
 	iss >> channelName >> passwd;
+	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	if (channelName.empty())
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
 		return;
 	}
-	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	if(channelName[0] && channelName[0] != '#' && channelName[0] != '&')
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
@@ -630,12 +630,12 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 		return;
 	}
 	std::string channelName = arguments[0];
+	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	if(channelName.empty())
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
 		return;
 	}
-	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	Channel *channel = getChannelByName(channelName);
 	channel = checkChannelName(channelName, _channels);
 	if(!channel)
@@ -1021,7 +1021,8 @@ void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
 
 	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	channel = getChannelByName(channelName);
-	if (channelName.empty() || channelName[0] != '#' || channelName[0] != '&')
+	std::cout << "Channel name: " << channelName << std::endl;
+	if (channelName.empty() || (channelName[0] != '#' && channelName[0] != '&'))
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
 		return;
