@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/04 10:34:15 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/04 11:25:26 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -243,7 +243,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 		return;
 	}
 	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
-	if(channelName[0] && (channelName[0] != '#' || channelName[0] != '&'))
+	if(channelName[0] && channelName[0] != '#' && channelName[0] != '&')
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
 		return;
@@ -323,6 +323,7 @@ void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 	std::string reason;
 
 	iss >> channelName >> reason;
+	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	if (channelName.empty())
 	{
 		std::string msg = "PART";
@@ -424,6 +425,7 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 	std::string message;
 	std::string msg;
 	iss >> channelName >> inputNick >> message;
+	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	Channel *channel = getChannelByName(channelName);
 	if (inputNick.empty())
 	{
@@ -488,6 +490,7 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 	std::string channelName;
 
 	iss >> channelName >> nickname;
+	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	if (nickname.empty())
 	{
 		sendClientMsg(client_fd, ERR_NOSUCHNICK(nickname));
@@ -551,6 +554,7 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 		return;
 	}
 	channelName = arguments[0];
+	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	if(arguments[1][0] == ':')
 		arguments[1] = arguments[1].substr(1);
 	Channel *channel = getChannelByName(channelName);
@@ -631,6 +635,7 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 		sendClientMsg(client_fd, ERR_NOSUCHCHANNEL(channelName));
 		return;
 	}
+	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	Channel *channel = getChannelByName(channelName);
 	channel = checkChannelName(channelName, _channels);
 	if(!channel)
@@ -640,7 +645,7 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 	}
 	if(!channel->isOperator(client_fd))
 	{
-		if (channelName[0] && (channelName[0] != '#' || channelName[0] != '&'))
+		if (channelName[0] && channelName[0] != '#' && channelName[0] != '&')
 		{
 			sendClientMsg(client_fd, ERR_BADCHANMASK(channelName));
 			return;
@@ -651,7 +656,7 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 			return ;
 		}
 	}
-	if(channelName[0] && (channelName[0] != '#' || channelName[0] != '&'))
+	if(channelName[0] && channelName[0] != '#' && channelName[0] != '&')
 	{
 		sendClientMsg(client_fd, ERR_BADCHANMASK(channelName));
 		return;
@@ -1014,6 +1019,7 @@ void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
 	Channel *channel = NULL;
 	iss >> channelName;
 
+	std::transform(channelName.begin(), channelName.end(), channelName.begin(), ::tolower);
 	channel = getChannelByName(channelName);
 	if (channelName.empty() || channelName[0] != '#' || channelName[0] != '&')
 	{
