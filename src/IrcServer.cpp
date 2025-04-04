@@ -57,6 +57,8 @@ IrcServer &IrcServer::operator=(const IrcServer &rhs)
 IrcServer::~IrcServer()
 {
 	for (size_t i = 0; i < _users.size(); ++i) {
+		if (_users[i]->getFd() != -1)
+			close(_users[i]->getFd());
 		delete _users[i];
 	}
 	_users.clear();
@@ -65,6 +67,7 @@ IrcServer::~IrcServer()
 		delete _channels[i];
 	}
 	_channels.clear();
+	close(_socket);
 }
 
 /**
@@ -945,18 +948,12 @@ void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 				continue;
 			for (size_t j = 0; j < channels[i]->getUsers().size(); j++)
 			{
-				std::vector<Client *> users = channels[i]->getUsers();
 				std::string msg = ":" + getUserFd(client_fd)->getNick() + "!" + getUserFd(client_fd)->getUser() + "@" + getUserFd(client_fd)->getHost() + " PART " + channel->getName();
-				for(size_t z = 0; z < users.size(); z++)
-				{
-					if(users[z] && users[z]->getFd() != client_fd)
-						sendClientMsg(users[i]->getFd(), getUserFd(client_fd)->getNick() + " is leaving the channel" + channel->getName() + "\n");
-				}
 				if(!restOfCommand.empty())
 					msg += " :" + restOfCommand + "\r\n";
 				else
 					msg += "\r\n";
-				sendClientMsg(_user->getFd(), msg);
+				sendClientMsg(channels[i]->getUsers()[j]->getFd(), msg);
 			}
 			channels[i]->removeUser(getUserFd(client_fd));
 			if (channels[i]->getUsers().empty())
