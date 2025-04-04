@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/03 15:59:07 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/04 09:03:11 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,15 +56,15 @@ IrcServer &IrcServer::operator=(const IrcServer &rhs)
  */
 IrcServer::~IrcServer()
 {
-    for (size_t i = 0; i < _users.size(); ++i) {
-        delete _users[i];
-    }
-    _users.clear();
+	for (size_t i = 0; i < _users.size(); ++i) {
+		delete _users[i];
+	}
+	_users.clear();
 
-    for (size_t i = 0; i < _channels.size(); ++i) {
-        delete _channels[i];
-    }
-    _channels.clear();
+	for (size_t i = 0; i < _channels.size(); ++i) {
+		delete _channels[i];
+	}
+	_channels.clear();
 }
 
 /**
@@ -648,6 +648,8 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 	bool positive = false;
 	bool flag = false;
 	size_t i = 0;
+	size_t argIndex = 2;
+	
 	if(arguments[1][0] == '+' || arguments[1][0] != '-')
 	{
 		positive = true;
@@ -666,6 +668,7 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 			sendClientMsg(client_fd, ERR_UNKNOWNMODE(arguments[1]));
 			return;
 		}
+		
 		switch (arguments[1][i])
 		{
 			case 'i': // i (Set/remove Invite-only channel)
@@ -701,14 +704,12 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 			case 'k': // k (Set/remove the channel key)
 				if(positive)
 				{
-					if (i + 1 < arguments.size())
+					if (argIndex < arguments.size())
 					{
-						channel->setPassword(arguments[i + 1]);
-						if(!flag)
-							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +k " + arguments[i + 1] + "\r\n";
-						else
-							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +k " + arguments[i + 2] + "\r\n";
+						channel->setPassword(arguments[argIndex]);
+						msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +k " + arguments[argIndex] + "\r\n";
 						sendClientMsg(client_fd, msg);
+						argIndex++; // Move to the next parameter
 					}
 					else
 					{
@@ -726,21 +727,20 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 			case 'o': // o (Set/remove channel operator)
 				if(positive)
 				{
-					if (i + 1 < arguments.size())
-                	{
-						Client *targetUser = getUserByNick(arguments[i + 1]);
-						if (targetUser->findChannel(channel->getName()) == -1)
-						{
-							sendClientMsg(client_fd, ERR_USERONCHANNEL(arguments[i + 1], channel->getName()));
-							return;
-						}
+					if (argIndex < arguments.size())
+					{
+						Client *targetUser = getUserByNick(arguments[argIndex]);
 						if (targetUser)
 						{
+							if (targetUser->findChannel(channel->getName()) == -1)
+							{
+								sendClientMsg(client_fd, ERR_USERONCHANNEL(arguments[argIndex], channel->getName()));
+								argIndex++; // Still move to next parameter
+								continue;
+							}
+							
 							channel->addOperator(targetUser);
-							if(!flag)
-								msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +o " + arguments[i + 1] + "\r\n";
-							else
-								msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +o " + arguments[i + 2] + "\r\n";
+							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +o " + arguments[argIndex] + "\r\n";
 							
 							for (size_t j = 0; j < channel->getUsers().size(); j++)
 							{
@@ -749,30 +749,29 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 						}
 						else
 						{
-								sendClientMsg(client_fd, ERR_NOSUCHNICK(arguments[i + 1]));
+							sendClientMsg(client_fd, ERR_NOSUCHNICK(arguments[argIndex]));
 						}
+						argIndex++; // Move to the next parameter
 					}
 					else
 						sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
 				}
 				else
 				{
-					if (i + 1 < arguments.size())
+					if (argIndex < arguments.size())
 					{
-						Client *targetUser = getUserByNick(arguments[i + 1]);
+						Client *targetUser = getUserByNick(arguments[argIndex]);
 						if (targetUser)
 						{
 							channel->removeOperator(targetUser);
-							if(!flag)
-								msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -o " + arguments[i + 1] + "\r\n";
-							else
-								msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -o " + arguments[i + 2] + "\r\n";
+							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -o " + arguments[argIndex] + "\r\n";
 							sendClientMsg(client_fd, msg);
 						}
 						else
 						{
-							sendClientMsg(client_fd, ERR_NOSUCHNICK(arguments[i + 1]));
+							sendClientMsg(client_fd, ERR_NOSUCHNICK(arguments[argIndex]));
 						}
+						argIndex++; // Move to the next parameter
 					}
 					else
 					{
@@ -783,14 +782,12 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 			case 'l': // l (Set/remove channel limit)
 				if(positive)
 				{
-					if (i + 1 < arguments.size())
+					if (argIndex < arguments.size())
 					{
-						channel->setLimit(atoi(arguments[i + 1].c_str()));
-						if(!flag)
-							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +l " + arguments[i + 1] + "\r\n";
-						else
-							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +l " + arguments[i + 2] + "\r\n";
+						channel->setLimit(atoi(arguments[argIndex].c_str()));
+						msg = ":" + _user->getNick() + " MODE " + channel->getName() + " +l " + arguments[argIndex] + "\r\n";
 						sendClientMsg(client_fd, msg);
+						argIndex++; // Move to the next parameter
 					}
 					else
 					{
@@ -800,19 +797,22 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 				else
 				{
 					channel->setLimit(0);
-					if(!flag)
-						msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -l " + "\r\n";
-					else
-						msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -l " + "\r\n";
+					msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -l \r\n";
 					sendClientMsg(client_fd, msg);
 					positive = true;
 				}
+				break;
+			case '+': // Handle changing mode from - to +
+				positive = true;
+				break;
+			case '-': // Handle changing mode from + to -
+				positive = false;
 				break;
 			default:
 				break;
 		}
 	}
-	arguments.clear();	
+	arguments.clear();    
 }
 
 /**
