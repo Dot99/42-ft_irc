@@ -359,61 +359,6 @@ void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 }
 
 /**
- * @brief Command to list all channels
- * @param client_fd File descriptor of the client
- */
-void IrcServer::listCommand(int client_fd, std::string restOfCommand)
-{
-	sendClientMsg(client_fd, RPL_LISTSTART);
-	std::string msg;
-	std::string clientCount;
-	if (restOfCommand.empty())
-	{
-		for (size_t i = 0; i < _channels.size(); i++)
-		{
-			clientCount = to_string(_channels[i]->getUsers().size());
-			msg = RPL_LIST(_channels[i]->getName(), clientCount, _channels[i]->getTopic());
-			sendClientMsg(client_fd, msg);
-		}
-	}
-	else
-	{
-		for (size_t i = 0; i < _channels.size(); i++)
-		{
-			if (wildcardMatch(_channels[i]->getName(), restOfCommand))
-			{
-				clientCount = to_string(_channels[i]->getUsers().size());
-				msg = RPL_LIST(_channels[i]->getName(), clientCount, _channels[i]->getTopic());
-				sendClientMsg(client_fd, msg);
-			}
-		}
-	}
-	sendClientMsg(client_fd, RPL_LISTEND);
-}
-
-/**
- * @brief Command to exit the server
- * @param client_fd File descriptor of the client
- */
-void IrcServer::exitCommand(int client_fd)
-{
-	//Loop through all channels and remove user from them
-	for(size_t i = 0; i < _channels.size(); i++)
-	{
-		for(size_t j = 0; j < _channels[i]->getUsers().size(); j++)
-		{
-			if (_channels[i]->getUsers()[j]->getFd() == client_fd)
-			{
-				_channels[i]->removeUser(_user);
-				_user->removeChannel(_channels[i]);
-				close(client_fd);
-				break;
-			}
-		}
-	}
-}
-
-/**
  * @brief Command to kick a user from a channel
  * @param client_fd File descriptor of the client
  */
@@ -1060,22 +1005,22 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 {
 	if (command.empty() || command == "\r\n")
 		return;
-	std::string commands[14] = {"JOIN", "PART", "LIST", "EXIT", "KICK", "INVITE", "TOPIC", "MODE", "PASS", "NICK", "USER", "PRIVMSG", "QUIT", "WHO"};
+	std::string commands[12] = {"JOIN", "PART","KICK", "INVITE", "TOPIC", "MODE", "PASS", "NICK", "USER", "PRIVMSG", "QUIT", "WHO"};
 	int i = 0;
 	std::string foundCommand;
 	std::string restOfCommand;
 	_user = getUserFd(client_fd);
-	for (; i < 14; i++)
+	for (; i < 12; i++)
 	{
 		size_t pos = command.find(commands[i]);
 		if (pos != std::string::npos)
 		{
 			foundCommand = commands[i];
 			restOfCommand = command.substr(pos + commands[i].length());
-			if (foundCommand != "INVITE" && foundCommand != "USER" && foundCommand != "PART" && foundCommand != "MODE" && foundCommand != "PRIVMSG" && foundCommand != "TOPIC" && foundCommand != "WHO" && foundCommand != "KICK" && foundCommand != "JOIN")
-				restOfCommand = clean_input(restOfCommand, SPACES);
-			else
+			if (foundCommand == "PASS" || foundCommand == "QUIT" || foundCommand == "NICK")
 				restOfCommand = clean_input(restOfCommand, ENTER);
+			else
+				restOfCommand = clean_input(restOfCommand, SPACES);
 			break;
 		}
 	}
@@ -1088,39 +1033,33 @@ void IrcServer::parseCommand(int client_fd, std::string command)
 		partCommand(client_fd, restOfCommand);
 		break;
 	case 2:
-		listCommand(client_fd, restOfCommand);
-		break;
-	case 3:
-		exitCommand(client_fd);
-		break;
-	case 4:
 		kickCommand(client_fd, restOfCommand);
 		break;
-	case 5:
+	case 3:
 		inviteCommand(client_fd, restOfCommand);
 		break;
-	case 6:
+	case 4:
 		topicCommand(client_fd, restOfCommand);
 		break;
-	case 7:
+	case 5:
 		modeCommand(client_fd, restOfCommand);
 		break;
-	case 8:
+	case 6:
 		passCommand(client_fd, restOfCommand);
 		break;
-	case 9:
+	case 7:
 		nickCommand(client_fd, restOfCommand);
 		break;
-	case 10:
+	case 8:
 		userCommand(client_fd, restOfCommand);
 		break;
-	case 11:
+	case 9:
 		_user->handleChannelMessage(client_fd, restOfCommand);
 		break;
-	case 12:
+	case 10:
 		quitCommand(client_fd, restOfCommand);
 		break;
-	case 13:
+	case 11:
 		whoCommand(client_fd, restOfCommand);
 		break;
 	default:
