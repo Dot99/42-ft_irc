@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/04 09:03:11 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/04 10:34:15 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -537,10 +537,19 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 {
 	std::istringstream iss(restOfCommand);
 	std::string channelName;
-	std::string inputTopic;
-	iss >> channelName >> inputTopic;
-	if (inputTopic[0] && inputTopic[0] == ':')
-		inputTopic = inputTopic.substr(1);
+	std::vector<std::string> arguments;
+	std::string argument;
+	while(iss >> argument)
+		arguments.push_back(argument);
+	if (arguments.size() < 2)
+	{
+		std::string msg = "TOPIC";
+		sendClientMsg(client_fd, ERR_NEEDMOREPARAMS(msg));
+		return;
+	}
+	channelName = arguments[0];
+	if(arguments[1][0] == ':')
+		arguments[1] = arguments[1].substr(1);
 	Channel *channel = getChannelByName(channelName);
 	if (channel->isOperator(client_fd) == false || !channel)
 	{
@@ -555,7 +564,7 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 			return;
 		}
 	}
-	if (inputTopic.empty())
+	if (arguments[1].empty())
 	{
 		if (!channel->getTopic().empty())
 			sendClientMsg(client_fd, RPL_NOTOPIC(channel->getName()));
@@ -567,6 +576,12 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 	}
 	else
 	{
+		std::string inputTopic;
+		while(arguments.size() > 1)
+		{
+			inputTopic += arguments[1] + " ";
+			arguments.erase(arguments.begin() + 1);
+		}
 		channel->setTopic(inputTopic);
 		std::time_t now = std::time(0);
 		std::tm *ltm = std::localtime(&now);
@@ -766,6 +781,8 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 							channel->removeOperator(targetUser);
 							msg = ":" + _user->getNick() + " MODE " + channel->getName() + " -o " + arguments[argIndex] + "\r\n";
 							sendClientMsg(client_fd, msg);
+							for(size_t j = 0; j < channel->getUsers().size(); j++)
+								sendClientMsg(channel->getUsers()[j]->getFd(), msg);
 						}
 						else
 						{
