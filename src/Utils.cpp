@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 12:05:02 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/02 11:22:17 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/08 09:14:38 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,6 +93,13 @@ std::string sanitizeInput(std::string input) {
  * @brief Reads input from the client until a newline (`\n`) or reaches the max allowed length. Excess input is discarded to prevent buffer overflows.
  * @param client_fd File descriptor of the client
  * @param max_length Maximum length of the input
+ * @return std::string Sanitized input string
+ * @note This function handles control characters and ensures that the input does not exceed the specified maximum length.
+ * @note If the input exceeds the maximum length, it discards the excess input and returns an empty string.
+ * @note The function also handles CRLF (Carriage Return and Line Feed) sequences by treating them as a single newline.
+ * @note The function uses `recv` to read data from the socket, which is non-blocking and can return fewer bytes than requested.
+ * @note The function uses `MSG_PEEK` to check the next character without removing it from the buffer.
+ * @note The function uses `iscntrl` to check for control characters and ignores them except for tab, newline, and carriage return.
  */
 std::string readLine(int client_fd, unsigned long max_length) {
 	std::string input;

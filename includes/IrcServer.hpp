@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 10:34:13 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/31 10:30:27 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/08 09:19:03 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,33 @@
 
 const std::string SERVER_NAME = "Club Penguin";
 
+/**
+ * @brief IrcServer class represents the IRC server.
+ * It contains information about the server port, socket, password,
+ * current time, server address, poll file descriptors, channels, and users.
+ * It also provides methods to add and remove channels and users,
+ * start the server, and run the main loop.
+ * @details
+ * - The class contains private member variables to store the server properties.
+ * - The constructor initializes the server with the given arguments.
+ * - The destructor is empty as there are no dynamic allocations.
+ * - The class provides methods to add and remove channels and users.
+ * - The class provides methods to start the server and run the main loop.
+ * - The class provides methods to handle client commands such as part, exit, nick,
+ *  join, list, kick, invite, topic, mode, pass, user, quit, and who.
+ * - The class provides getters and setters for the server properties.
+ * - The class provides methods to parse commands and handle client messages.
+ * - The class uses a vector to store the channels and users.
+ * - The class uses a string to store the server password and current time.
+ * - The class uses a sockaddr_in structure to store the server address.
+ * - The class uses a vector of pollfd structures to manage file descriptors.
+ * - The class uses a pointer to the Client class to represent the current user.
+ * - The class uses a vector of strings to store command arguments.
+ * - The class uses a string to store the command arguments.
+ * - The class uses a string to store the command rest of the arguments.
+ * - The class uses a string to store the command name.
+ * 
+*/
 class IrcServer
 {
 	private:

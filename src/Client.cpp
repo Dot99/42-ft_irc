@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:26:01 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/03 15:47:37 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/08 09:11:50 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,7 +96,7 @@ void Client::removeClient(int client_fd)
  * @brief Handles a channel message
  * 
  * @param client_fd Client file descriptor
- * @param buffer Buffer
+ * @param restOfCommand Rest of the command
 */
 void Client::handleChannelMessage(int client_fd, const std::string restOfCommand)
 {
@@ -150,7 +150,6 @@ void Client::handleChannelMessage(int client_fd, const std::string restOfCommand
  * @brief Handles a client message
  * 
  * @param client_fd Client file descriptor
- * @param commands Commands object
 */
 void Client::handleClientMessage(int client_fd)
 {
@@ -223,7 +222,6 @@ int Client::acceptClient(int client_fd)
  * @brief Validates the user
  * 
  * @param client_fd Client file descriptor
- * @param input Input string
 */
 void Client::validateUser(int client_fd)
 {

@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 10:26:42 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/03/31 10:36:20 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/08 09:20:15 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,11 @@
 
 IrcServer *server = NULL;
 
+/**
+ * @brief Check the arguments passed to the program.
+ * 
+ * @param signum The signal number.
+*/
 void signalHandler(int signum)
 {
 	if (signum == SIGPIPE || signum == SIGSEGV)
@@ -26,6 +31,13 @@ void signalHandler(int signum)
 	exit(signum);
 }
 
+/**
+ * @brief  Check the arguments passed to the progra and start the server.
+ * 
+ * @param argc Number of arguments.
+ * @param argv Arguments passed to the program.
+ * @return int 0 if success, 1 if error.
+*/
 int main(int argc, char **argv)
 {
 	if (checkArgs(argc, argv))

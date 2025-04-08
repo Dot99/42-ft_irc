@@ -6,7 +6,7 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/03 11:14:16 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/04 11:42:00 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/08 09:13:27 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,6 @@ IrcServer::~IrcServer()
  * @brief Find a channel by name
  *
  * @param name Channel name
- * @param channels List of channels
  * @return Channel* Channel
  */
 void IrcServer::removeChannelByName(const std::string &name)
@@ -225,6 +224,7 @@ void IrcServer::setArgs(const std::vector<std::string> &args)
 /**
  * @brief Command to join a channel
  * @param client_fd File descriptor of the client
+ * @param restOfCommand Rest of the command
  */
 void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 {
@@ -315,6 +315,7 @@ void IrcServer::joinCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to leave a channel
  * @param client_fd File descriptor of the client
+ * @param restOfCommand Rest of the command
  */
 void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 {
@@ -361,6 +362,7 @@ void IrcServer::partCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to kick a user from a channel
  * @param client_fd File descriptor of the client
+ * @param restOfCommand Rest of the command
  */
 void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 {
@@ -427,6 +429,7 @@ void IrcServer::kickCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to invite a user to a channel
  * @param client_fd File descriptor of the client
+ * @param restOfCommand Rest of the command
  */
 void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 {
@@ -483,6 +486,7 @@ void IrcServer::inviteCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to set the topic of a channel
  * @param client_fd File descriptor of the client
+ * @param restOfCommand Rest of the command
  */
 void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 {
@@ -558,6 +562,7 @@ void IrcServer::topicCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to set the mode of a channel
  * @param client_fd File descriptor of the client
+ * @param restOfCommand Rest of the command
  */
 void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 {
@@ -788,6 +793,7 @@ void IrcServer::modeCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to set the password of the server
  * @param client_fd File descriptor of the client
+ * @param restOfCommand Rest of the command
  */
 void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 {
@@ -803,6 +809,7 @@ void IrcServer::passCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to change the nickname of the user
  * @param client_fd File descriptor of the client
+ * @param restOfCommand Rest of the command
  */
 void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 {
@@ -843,6 +850,7 @@ void IrcServer::nickCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to set the user of the client
  * @param client_fd File descriptor of the client
+ * @param restOfCommand Rest of the command
  */
 void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 {
@@ -902,6 +910,7 @@ void IrcServer::userCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to quit the server
  * @param client_fd File descriptor of the client
+ * @param restOfCommand Rest of the command
  */
 void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 {
@@ -956,6 +965,7 @@ void IrcServer::quitCommand(int client_fd, std::string restOfCommand)
 /**
  * @brief Command to get the list of users in a channel
  * @param client_fd File descriptor of the client
+ * @param restOfCommand Rest of the command
  */
 void IrcServer::whoCommand(int client_fd, std::string restOfCommand)
 {

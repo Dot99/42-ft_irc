@@ -6,13 +6,48 @@
 /*   By: gude-jes <gude-jes@student.42porto.com>    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/10 10:25:36 by gude-jes          #+#    #+#             */
-/*   Updated: 2025/04/03 15:47:00 by gude-jes         ###   ########.fr       */
+/*   Updated: 2025/04/08 09:19:09 by gude-jes         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 #include "Utils.hpp"
 
+/**
+ * @brief Client class represents a client connected to the IRC server.
+ * It contains information about the client's nickname, username, host,
+ * real name, file descriptor, and authentication status.
+ * It also provides methods to handle client messages, manage channels,
+ * and validate user authentication.
+ * @details
+ * - The class contains private member variables to store the client properties.
+ * - The constructor initializes the client with the server reference.
+ * - The destructor is empty as there are no dynamic allocations.
+ * - The class provides methods to validate user authentication, accept client connections,
+ *  handle client messages, and manage channels.
+ * - The class uses a vector to store the channels the client is part of.
+ * - The class uses a string to store the client's nickname, username, host, and real name.
+ * - The class uses a boolean to store the welcome message status and authentication status.
+ * - The class uses a boolean to store the password verification status.
+ * - The class uses a sockaddr_in structure to store the client's address.
+ * - The class provides getters and setters for the client properties.
+ * - The class provides methods to add and remove channels.
+ * - The class provides methods to find a channel by name.
+ * - The class provides methods to handle channel messages and client messages.
+ * - The class provides methods to remove a client from the server.
+ * - The class provides methods to set and get the client properties.
+ * - The class provides methods to set and get the client file descriptor.
+ * - The class provides methods to set and get the client nickname.
+ * - The class provides methods to set and get the client username.
+ * - The class provides methods to set and get the client host.
+ * - The class provides methods to set and get the client real name.
+ * - The class provides methods to set and get the client welcome message status.
+ * - The class provides methods to set and get the client authentication status.
+ * - The class provides methods to set and get the client password verification status.
+ * - The class provides methods to set and get the client address.
+ * - The class provides methods to set and get the client channels.
+ * 
+*/
 class Client
 {
 	private:
